@@ -331,9 +331,11 @@ class SingleFilePropertyModal extends Modal {
 		contentEl.addClass('yaml-property-manager-modal');
 		contentEl.addClass('single-file-property-modal');
 		
-		// Add these lines for width control
+		// Set proper scrolling and width
 		this.modalEl.style.width = '95%';
 		this.modalEl.style.maxWidth = '900px';
+		this.modalEl.style.maxHeight = '85vh'; 
+		this.modalEl.style.overflowY = 'auto';
 		
 		// Add header with back button
 		const headerContainer = contentEl.createDiv({ cls: 'modal-header' });
@@ -355,13 +357,19 @@ class SingleFilePropertyModal extends Modal {
 		// Create property editor with width control
 		const propertyContainer = contentEl.createDiv({ cls: 'property-container' });
 		propertyContainer.style.width = '100%';
-		propertyContainer.style.overflow = 'hidden';
+		propertyContainer.style.maxHeight = 'none'; // Allow full height
+		propertyContainer.style.overflow = 'visible'; // No internal scrolling
 		
 		// Display existing properties
 		this.renderPropertyEditor(propertyContainer);
 		
-		// Add buttons
+		// Add buttons - make sticky
 		const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+		buttonContainer.style.position = 'sticky';
+		buttonContainer.style.bottom = '0';
+		buttonContainer.style.backgroundColor = 'var(--background-primary)';
+		buttonContainer.style.padding = '10px 0';
+		buttonContainer.style.zIndex = '10';
 		
 		// Add property button
 		const addPropertyButton = buttonContainer.createEl('button', { text: 'Add Property' });
@@ -676,9 +684,10 @@ class TemplateSelectionModal extends Modal {
 		contentEl.addClass('yaml-property-manager-modal');
 		contentEl.addClass('template-selection-modal');
 		
-		// Add these lines for width control
 		this.modalEl.style.width = '95%';
 		this.modalEl.style.maxWidth = '900px';
+		this.modalEl.style.maxHeight = '85vh';
+		this.modalEl.style.overflowY = 'auto';
 		
 		// Add header with back button
 		const headerContainer = contentEl.createDiv({ cls: 'modal-header' });
@@ -783,9 +792,14 @@ class TemplateSelectionModal extends Modal {
 			text: 'Select a template file to view and choose properties' 
 		});
 		
-		// Buttons
+		// Buttons - make sticky
 		const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
-		
+		buttonContainer.style.position = 'sticky';
+		buttonContainer.style.bottom = '0';
+		buttonContainer.style.backgroundColor = 'var(--background-primary)';
+		buttonContainer.style.padding = '10px 0';
+		buttonContainer.style.zIndex = '10';
+
 		const applyButton = buttonContainer.createEl('button', { 
 			text: 'Apply Template', 
 			cls: 'primary-button',
@@ -1020,21 +1034,28 @@ class FileSelectorModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('file-selector-modal');
 		
-		// Add these lines for width control
-		this.modalEl.style.width = '95%';
-		this.modalEl.style.maxWidth = '900px';
+		// Ensure modal has scrolling when needed
+		this.modalEl.style.maxHeight = '85vh';
+		this.modalEl.style.overflow = 'auto';
 		
 		contentEl.createEl('h2', { text: 'Select a Template File' });
 		
-		// Create file tree
-		const fileTree = contentEl.createDiv({ cls: 'file-tree' });
+		// Create file tree with fixed height and scrolling
+		const fileTree = contentEl.createDiv({ cls: 'file-tree-container' });
+		fileTree.style.maxHeight = '400px';
+		fileTree.style.overflowY = 'auto';
 		
 		// Recursively add files/folders
 		const rootFolder = this.app.vault.getRoot();
 		this.addFolderToTree(fileTree, rootFolder);
 		
-		// Buttons
+		// Buttons - make sure they're outside scrollable area
 		const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+		buttonContainer.style.position = 'sticky';
+		buttonContainer.style.bottom = '0';
+		buttonContainer.style.backgroundColor = 'var(--background-primary)';
+		buttonContainer.style.padding = '10px 0';
+		buttonContainer.style.zIndex = '10';
 		
 		const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
 		cancelButton.addEventListener('click', () => {
@@ -1123,33 +1144,23 @@ class PropertyManagerModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('property-manager-modal');
 		
-		this.modalEl.style.width = '95%';
-		this.modalEl.style.maxWidth = '900px';
-	
+		// Remove fixed dimensions and let the window size to content
+		this.modalEl.style.width = 'auto';
+		this.modalEl.style.height = 'auto'; // Allow height to fit content
+		this.modalEl.style.maxWidth = '600px';
+		this.modalEl.style.overflow = 'visible';
+		this.modalEl.style.maxHeight = 'none';
+		
 		contentEl.createEl('h2', { text: 'YAML Property Manager' });
 		
-		// Actions section
+		// Actions container
 		const actionsContainer = contentEl.createDiv({ cls: 'actions-container' });
+		actionsContainer.style.display = 'flex';
+		actionsContainer.style.flexDirection = 'column';
+		actionsContainer.style.gap = '20px';
+		actionsContainer.style.width = '100%';
 		
-		// Single file management
-		const singleFileContainer = actionsContainer.createDiv({ cls: 'action-section' });
-		singleFileContainer.createEl('h3', { text: 'Single File Operations' });
-		
-		const currentFileButton = singleFileContainer.createEl('button', { 
-			text: 'Manage Current File Properties' 
-		});
-		currentFileButton.style.width = '100%';
-		currentFileButton.style.boxSizing = 'border-box';
-		currentFileButton.addEventListener('click', () => {
-			const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-			if (activeView && activeView.file) {
-				this.plugin.navigateToModal(this, 'singleFile', activeView.file);
-			} else {
-				new Notice('No file is currently active');
-			}
-		});
-		
-		// Batch operations
+		// Only create the batch container
 		const batchContainer = actionsContainer.createDiv({ cls: 'action-section' });
 		batchContainer.createEl('h3', { text: 'Batch Operations' });
 		
@@ -1207,7 +1218,6 @@ class PropertyManagerModal extends Modal {
 		applyTemplateButton.style.boxSizing = 'border-box';
 		applyTemplateButton.addEventListener('click', () => {
 			if (this.plugin.selectedFiles.length > 0) {
-				// Open template selection modal with the selected files
 				this.plugin.navigateToModal(this, 'template');
 			} else {
 				new Notice('Please select files first');
@@ -1231,9 +1241,41 @@ class PropertyManagerModal extends Modal {
 				new Notice('Please select files first');
 			}
 		});
-	
-		// Rest of the code...
-	
+		
+		// Add divider line
+		const divider = batchContainer.createEl('hr');
+		divider.style.margin = '20px 0';
+		divider.style.borderTop = '1px solid var(--background-modifier-border)';
+		
+		// Add Single File Operations header and button
+		batchContainer.createEl('h3', { text: 'Single File Operations' });
+		
+		const currentFileButton = batchContainer.createEl('button', { 
+			text: 'Manage Current File Properties' 
+		});
+		currentFileButton.style.width = '100%';
+		currentFileButton.style.boxSizing = 'border-box';
+		currentFileButton.addEventListener('click', () => {
+			const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (activeView && activeView.file) {
+				this.plugin.navigateToModal(this, 'singleFile', activeView.file);
+			} else {
+				new Notice('No file is currently active');
+			}
+		});
+		
+		// Close button container
+		const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+		buttonContainer.style.marginTop = '15px';
+		
+		// Close button
+		const closeButton = buttonContainer.createEl('button', { text: 'Close' });
+		closeButton.style.width = 'auto';
+		closeButton.style.boxSizing = 'border-box';
+		closeButton.addEventListener('click', () => {
+			this.close();
+		});
+		
 		// Make sure we update button states
 		this.updateButtonState();
 	}
@@ -1300,6 +1342,8 @@ class BatchFileSelectorModal extends Modal {
 		// Add these lines for width control
 		this.modalEl.style.width = '95%';
 		this.modalEl.style.maxWidth = '900px';
+		this.modalEl.style.maxHeight = '85vh';
+		this.modalEl.style.overflowY = 'auto';
 		
 		// Add header with back button
 		const headerContainer = contentEl.createDiv({ cls: 'modal-header' });
@@ -1345,6 +1389,11 @@ class BatchFileSelectorModal extends Modal {
 		
 		// Buttons
 		const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+		buttonContainer.style.position = 'sticky';
+		buttonContainer.style.bottom = '0';
+		buttonContainer.style.backgroundColor = 'var(--background-primary)';
+		buttonContainer.style.padding = '10px 0';
+		buttonContainer.style.zIndex = '10';
 		
 		const confirmButton = buttonContainer.createEl('button', {
 			text: 'Apply to Selected Files',
@@ -1549,10 +1598,14 @@ class BulkPropertyEditorModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.addClass('yaml-property-manager-modal');
+		contentEl.addClass('bulk-property-editor-modal');
 		
-		// Set explicit size for the modal
+		// Increase width to accommodate properties
 		this.modalEl.style.width = '95%';
-		this.modalEl.style.maxWidth = '900px';
+		this.modalEl.style.maxWidth = '1000px'; // Wider to fit content
+		this.modalEl.style.maxHeight = '85vh';
+		this.modalEl.style.overflowY = 'auto';
+		this.modalEl.style.overflowX = 'visible'; // Prevent horizontal scrolling
 		
 		// Add header with back button
 		const headerContainer = contentEl.createDiv({ cls: 'modal-header' });
@@ -1590,30 +1643,44 @@ class BulkPropertyEditorModal extends Modal {
 		// Remove loading element
 		loadingEl.remove();
 		
-		// Container for property editing
+		// Container for property editing - ensure it doesn't restrict width
 		const propertyContainer = contentEl.createDiv({ cls: 'bulk-property-container' });
+		propertyContainer.style.width = '100%';
+		propertyContainer.style.overflowX = 'visible';
 		
 		// New section - Existing Properties
 		const existingPropertiesSection = propertyContainer.createDiv({ cls: 'existing-properties-section' });
+		existingPropertiesSection.style.width = '100%';
+		existingPropertiesSection.style.overflowX = 'visible';
 		existingPropertiesSection.createEl('h3', { text: 'Existing Properties' });
 		
 		const existingPropertiesList = existingPropertiesSection.createDiv({ cls: 'existing-properties-list' });
+		existingPropertiesList.style.width = '100%';
+		existingPropertiesList.style.overflowX = 'visible';
 		this.renderExistingProperties(existingPropertiesList);
 		
 		// New section - Property Reordering (only if possible)
 		const reorderSection = propertyContainer.createDiv({ cls: 'property-reorder-section' });
+		reorderSection.style.width = '100%';
+		reorderSection.style.overflowX = 'visible';
 		reorderSection.createEl('h3', { text: 'Reorder Properties' });
 		this.renderPropertyReordering(reorderSection);
 		
 		// Property list section
 		const propertyListSection = propertyContainer.createDiv({ cls: 'property-list-section' });
+		propertyListSection.style.width = '100%';
+		propertyListSection.style.overflowX = 'visible';
 		propertyListSection.createEl('h3', { text: 'Properties to Add/Modify' });
 		
 		const propertyList = propertyListSection.createDiv({ cls: 'property-list' });
+		propertyList.style.width = '100%';
+		propertyList.style.minWidth = '700px';
+		propertyList.style.overflowX = 'visible';
 		this.renderPropertyList(propertyList);
 		
 		// Add property button
 		const addButtonContainer = propertyListSection.createDiv();
+		addButtonContainer.style.width = '100%';
 		const addPropertyButton = addButtonContainer.createEl('button', { text: 'Add Property' });
 		addPropertyButton.addEventListener('click', () => {
 			this.addNewPropertyRow(propertyList);
@@ -1621,13 +1688,19 @@ class BulkPropertyEditorModal extends Modal {
 		
 		// Properties to delete section
 		const deleteSection = propertyContainer.createDiv({ cls: 'property-delete-section' });
+		deleteSection.style.width = '100%';
+		deleteSection.style.overflowX = 'visible';
 		deleteSection.createEl('h3', { text: 'Properties to Delete' });
 		
 		const deleteList = deleteSection.createDiv({ cls: 'delete-property-list' });
+		deleteList.style.width = '100%';
+		deleteList.style.minWidth = '700px';
+		deleteList.style.overflowX = 'visible';
 		this.renderDeleteList(deleteList);
 		
 		// Add property to delete button
 		const addDeleteButtonContainer = deleteSection.createDiv();
+		addDeleteButtonContainer.style.width = '100%';
 		const addDeleteButton = addDeleteButtonContainer.createEl('button', { text: 'Add Property to Delete' });
 		addDeleteButton.addEventListener('click', () => {
 			this.addNewDeleteRow(deleteList);
@@ -1635,6 +1708,8 @@ class BulkPropertyEditorModal extends Modal {
 		
 		// Options section
 		const optionsSection = contentEl.createDiv({ cls: 'options-section' });
+		optionsSection.style.width = '100%';
+		optionsSection.style.overflowX = 'visible';
 		optionsSection.createEl('h3', { text: 'Options' });
 		
 		// Preserve existing option
@@ -1645,7 +1720,7 @@ class BulkPropertyEditorModal extends Modal {
 		});
 		// Set checked state after creation
 		preserveCheckbox.checked = this.preserveExisting;
-
+	
 		preserveOption.createEl('label', { 
 			text: 'Preserve existing values (only add properties that don\'t exist in the files)' 
 		});
@@ -1654,8 +1729,14 @@ class BulkPropertyEditorModal extends Modal {
 			this.preserveExisting = preserveCheckbox.checked;
 		});
 		
-		// Buttons
+		// Buttons - make sticky with full width
 		const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+		buttonContainer.style.position = 'sticky';
+		buttonContainer.style.bottom = '0';
+		buttonContainer.style.backgroundColor = 'var(--background-primary)';
+		buttonContainer.style.padding = '10px 0';
+		buttonContainer.style.zIndex = '10';
+		buttonContainer.style.width = '100%';
 		
 		const applyButton = buttonContainer.createEl('button', { 
 			text: 'Apply Changes', 
@@ -1763,6 +1844,9 @@ class BulkPropertyEditorModal extends Modal {
 	// Fixed renderPropertyReordering method (to remove duplicate text)
 	renderPropertyReordering(container: HTMLElement) {
 		container.empty();
+		container.style.width = '100%';
+		container.style.minWidth = '700px';
+		container.style.overflowX = 'visible';
 		
 		if (this.propertyOrder.length === 0) {
 			container.createEl('p', { 
@@ -1779,12 +1863,17 @@ class BulkPropertyEditorModal extends Modal {
 			
 			// Still show properties, but in a disabled state
 			const listContainer = container.createEl('div', { cls: 'property-reorder-list disabled' });
+			listContainer.style.width = '100%';
+			listContainer.style.minWidth = '700px';
+			listContainer.style.overflowX = 'visible';
 			
 			for (const prop of this.propertyOrder) {
 				const item = listContainer.createEl('div', { 
 					cls: 'property-reorder-item disabled',
 					attr: { 'data-property': prop }
 				});
+				item.style.width = '100%';
+				item.style.minWidth = '650px';
 				
 				// Add property name
 				const dragHandle = item.createEl('div', { cls: 'property-drag-handle disabled' });
@@ -1813,6 +1902,9 @@ class BulkPropertyEditorModal extends Modal {
 		
 		// Create the sortable list
 		const listContainer = container.createEl('div', { cls: 'property-reorder-list' });
+		listContainer.style.width = '100%';
+		listContainer.style.minWidth = '700px';
+		listContainer.style.overflowX = 'visible';
 		
 		for (let i = 0; i < this.propertyOrder.length; i++) {
 			const prop = this.propertyOrder[i];
@@ -1820,6 +1912,8 @@ class BulkPropertyEditorModal extends Modal {
 				cls: 'property-reorder-item',
 				attr: { 'data-property': prop }
 			});
+			item.style.width = '100%';
+			item.style.minWidth = '650px';
 			
 			// Add drag handle
 			const dragHandle = item.createEl('div', { cls: 'property-drag-handle' });
@@ -1985,6 +2079,9 @@ class BulkPropertyEditorModal extends Modal {
 	// New method to render the existing properties section
 	renderExistingProperties(container: HTMLElement) {
 		container.empty();
+		container.style.width = '100%';
+		container.style.minWidth = '700px';
+		container.style.overflowX = 'visible';
 		
 		if (this.existingProperties.size === 0) {
 			container.createEl('p', { text: 'No properties found in the selected files.' });
@@ -1996,6 +2093,7 @@ class BulkPropertyEditorModal extends Modal {
 		headerRow.style.display = 'flex';
 		headerRow.style.width = '100%';
 		headerRow.style.flexWrap = 'nowrap';
+		headerRow.style.minWidth = '700px';
 		
 		const nameHeader = headerRow.createEl('div', { text: 'Property Name', cls: 'property-name' });
 		nameHeader.style.flex = '1';
@@ -2030,6 +2128,7 @@ class BulkPropertyEditorModal extends Modal {
 			row.style.flexWrap = 'nowrap';
 			row.style.alignItems = 'center';
 			row.style.marginBottom = '5px';
+			row.style.minWidth = '700px';
 			
 			// Property name
 			const nameCell = row.createEl('div', { text: propName, cls: 'property-name' });
@@ -2142,11 +2241,17 @@ class BulkPropertyEditorModal extends Modal {
 	renderPropertyList(container: HTMLElement) {
 		container.empty();
 		
+		// Set container to full width with minimum
+		container.style.width = '100%';
+		container.style.minWidth = '700px';
+		container.style.overflowX = 'visible';
+		
 		// Create heading row
 		const headerRow = container.createEl('div', { cls: 'property-item header' });
 		headerRow.style.display = 'flex';
 		headerRow.style.width = '100%';
 		headerRow.style.flexWrap = 'nowrap';
+		headerRow.style.minWidth = '700px';
 		
 		const nameHeader = headerRow.createEl('div', { text: 'Property Name', cls: 'property-name' });
 		nameHeader.style.flex = '1';
@@ -2343,12 +2448,16 @@ class BulkPropertyEditorModal extends Modal {
 	
 	renderDeleteList(container: HTMLElement) {
 		container.empty();
+		container.style.width = '100%';
+		container.style.minWidth = '700px';
+		container.style.overflowX = 'visible';
 		
 		// Create heading row
 		const headerRow = container.createEl('div', { cls: 'property-item header' });
 		headerRow.style.display = 'flex';
 		headerRow.style.width = '100%';
 		headerRow.style.flexWrap = 'nowrap';
+		headerRow.style.minWidth = '700px';
 		
 		const nameHeader = headerRow.createEl('div', { text: 'Property Name', cls: 'property-name' });
 		nameHeader.style.flex = '1';

@@ -1,29 +1,97 @@
 /* styles.css */
+/* Base modal styles */
 .yaml-property-manager-modal {
     padding: 20px;
-    min-width: 700px;
+    min-width: 500px;
     width: auto;
-    max-width: 90vw;
-    max-height: 85vh;
-    overflow-y: auto;
-    overflow-x: hidden;
     box-sizing: border-box;
 }
 
+/* Main property manager modal - no scrolling */
 .property-manager-modal {
     padding: 20px;
-    min-width: 700px;
     width: auto;
-    max-width: 90vw;
+    height: auto;
+    max-width: 600px;
+    max-height: none;
+    overflow: visible;
+    margin: 0 auto;
+}
+
+/* All other modals - enable scrolling when needed */
+.template-selection-modal,
+.batch-file-selector-modal,
+.file-selector-modal {
+    padding: 20px;
+    width: auto;
+    max-width: 600px;
+    /* Restore scrolling for other modals */
     max-height: 85vh;
     overflow-y: auto;
     overflow-x: hidden;
+    margin: 0 auto;
 }
 
-.property-container, .template-container, .file-tree-container {
+/* Single file property modal specifics */
+.single-file-property-modal {
+    padding: 20px;
+    width: auto;
+    max-width: 900px; /* Wider for more content */
+    max-height: 85vh;
+    overflow-y: auto !important; /* Force scrollbar when needed */
+    overflow-x: visible;
+    margin: 0 auto;
+}
+
+.single-file-property-modal .property-container {
+    max-height: none !important; /* Allow container to expand */
+    overflow: visible !important;
+}
+
+/* Bulk property editor fixing */
+.bulk-property-editor-modal {
+    padding: 20px;
+    width: auto;
+    max-width: 1000px; /* Much wider to accommodate property tables */
+    max-height: 85vh;
+    overflow-y: auto !important;
+    overflow-x: visible !important; /* Prevent horizontal scrolling */
+    margin: 0 auto;
+}
+
+/* Override Obsidian's base modal styles only for the main window */
+.property-manager-modal .modal-container {
+    overflow: visible !important;
+}
+
+.property-manager-modal .modal-content {
+    overflow: visible !important;
+}
+
+.property-manager-modal .modal {
+    overflow: visible !important;
+    max-height: none !important;
+}
+
+/* Containers with fixed height and scrolling */
+.property-container, .template-container {
     margin: 15px 0;
     max-height: 400px;
     overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 10px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* File tree specifically needs fixed height with scroll */
+.file-tree-container {
+    margin: 15px 0;
+    max-height: 400px;
+    min-height: 300px;
+    overflow-y: auto !important;
     overflow-x: hidden;
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
@@ -45,11 +113,18 @@
     width: 100%;
     margin-bottom: 8px;
     padding: 5px 0;
+    min-width: 700px; /* Ensure minimum width for property rows */
 }
 
 .property-name, .property-value, .property-actions, .property-include, .property-consistent, .property-type {
     display: block;
     padding: 2px 5px;
+}
+
+/* Ensure property rows don't shrink too much */
+.property-name, .property-value, .property-type, .property-actions {
+    min-width: fit-content !important;
+    white-space: nowrap;
 }
 
 .property-item.header {
@@ -73,7 +148,8 @@
 
 .property-value {
     flex: 2;
-    min-width: 150px;
+    min-width: 150px !important;
+    max-width: none !important;
 }
 
 .property-actions {
@@ -100,12 +176,28 @@
     box-sizing: border-box;
 }
 
+/* Ensure button container is always visible */
 .button-container {
-    margin-top: 20px;
+    margin-top: 15px;
     margin-bottom: 10px;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    width: 100%;
+}
+
+.template-selection-modal .button-container,
+.file-selector-modal .button-container,
+.bulk-property-editor-modal .button-container,
+.batch-file-selector-modal .button-container,
+.single-file-property-modal .button-container {
+    position: sticky;
+    bottom: 0;
+    background: var(--background-primary);
+    padding: 10px 0;
+    margin-top: 15px;
+    border-top: 1px solid var(--background-modifier-border);
+    z-index: 10;
 }
 
 .primary-button {
@@ -146,19 +238,30 @@
     font-style: italic;
 }
 
+/* Update the actions-container to support single column layout */
 .actions-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 20px;
     width: 100%;
     box-sizing: border-box;
+    margin: 10px 0;
 }
 
+/* Adjust action-section for the new consolidated layout */
 .action-section {
-    padding: 10px;
+    padding: 15px;
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
     box-sizing: border-box;
+    width: 100%;
+}
+
+/* Style for the divider */
+.action-section hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid var(--background-modifier-border);
 }
 
 .help-container {
@@ -170,7 +273,7 @@
     width: 100%;
 }
 
-/* Bulk property editor specific styles */
+/* Fix property containers to prevent horizontal scrolling */
 .bulk-property-container {
     display: flex;
     flex-direction: column;
@@ -178,19 +281,25 @@
     margin: 15px 0;
     width: 100%;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    padding-bottom: 60px; /* Make room for fixed buttons */
 }
 
-.property-list-section, .property-delete-section {
+/* Ensure property containers have proper scroll */
+.existing-properties-section,
+.property-reorder-section,
+.property-list-section,
+.property-delete-section {
+    max-height: 300px;
+    overflow-y: auto !important;
+    overflow-x: visible !important;
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
     padding: 10px;
-    height: auto;
-    max-height: 250px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    margin-bottom: 15px;
+    width: 100% !important;
     box-sizing: border-box;
-    width: 100%;
 }
 
 .options-section {
@@ -252,6 +361,13 @@ input, select, button {
     box-sizing: border-box;
 }
 
+/* Ensure buttons don't cause overflow */
+button {
+    white-space: normal; /* Allow text to wrap */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .property-value input {
     width: 100%;
     min-height: 24px;
@@ -285,23 +401,6 @@ input, select, button {
     width: 50px;
     text-align: center;
     flex-shrink: 0;
-}
-
-/* Common styles for all modals */
-.yaml-property-manager-modal,
-.property-manager-modal,
-.template-selection-modal,
-.single-file-property-modal,
-.batch-file-selector-modal,
-.file-selector-modal {
-    padding: 20px;
-    min-width: 700px;
-    width: auto;
-    max-width: 90vw;
-    max-height: 85vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    box-sizing: border-box;
 }
 
 /* Template selection specific */
@@ -466,18 +565,6 @@ input, select, button {
 }
 
 /* Styles for existing properties section */
-.existing-properties-section {
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 20px;
-    max-height: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    box-sizing: border-box;
-    width: 100%;
-}
-
 .existing-properties-list {
     width: 100%;
 }
@@ -533,22 +620,11 @@ input, select, button {
 }
 
 /* Property Reordering Section */
-.property-reorder-section {
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 20px;
-    max-height: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    box-sizing: border-box;
-    width: 100%;
-}
-
 .property-reorder-list {
     margin-top: 10px;
     margin-bottom: 10px;
     width: 100%;
+    min-width: 700px;
 }
 
 .property-reorder-item {
@@ -561,6 +637,8 @@ input, select, button {
     border-radius: 4px;
     cursor: move;
     transition: all 0.2s ease;
+    width: 100%;
+    min-width: 650px;
 }
 
 .property-reorder-item:hover {
@@ -643,42 +721,12 @@ input, select, button {
     }
 }
 
-@media screen and (max-width: 900px) {
-    .actions-container {
-        grid-template-columns: 1fr;
-    }
-    
+@media screen and (max-width: 650px) {
     .property-manager-modal {
         min-width: auto;
         width: 95%;
+        padding: 15px;
     }
-}
-
-/* Styles for disabled reordering */
-.property-reorder-warning {
-    color: var(--text-error);
-    font-weight: 500;
-}
-
-.property-reorder-list.disabled {
-    opacity: 0.75;
-}
-
-.property-reorder-item.disabled {
-    cursor: default;
-    background-color: var(--background-secondary-alt);
-}
-
-.property-drag-handle.disabled {
-    color: var(--text-muted);
-    cursor: default;
-}
-
-.property-reorder-usage {
-    font-size: 0.85em;
-    color: var(--text-muted);
-    margin-left: auto;
-    padding-right: 10px;
 }
 
 /* Styles for disabled reordering */
