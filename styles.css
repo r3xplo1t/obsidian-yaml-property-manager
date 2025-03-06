@@ -1,0 +1,513 @@
+/* styles.css */
+.yaml-property-manager-modal {
+    padding: 20px;
+    min-width: 700px;
+    width: auto;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.property-manager-modal {
+    padding: 20px;
+    min-width: 700px;
+    width: auto;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.property-container, .template-container, .file-tree-container {
+    margin: 15px 0;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 10px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Change property list from table to block layout */
+.property-list {
+    display: block;
+    width: 100%;
+}
+
+.property-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 5px 0;
+}
+
+.property-name, .property-value, .property-actions, .property-include, .property-consistent, .property-type {
+    display: block;
+    padding: 2px 5px;
+}
+
+.property-item.header {
+    font-weight: bold;
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+}
+
+/* For specific property editor sections */
+.property-name {
+    flex: 1;
+    min-width: 100px;
+    max-width: 200px;
+}
+
+.property-type {
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.property-value {
+    flex: 2;
+    min-width: 150px;
+}
+
+.property-actions {
+    width: 80px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.property-include, .property-consistent {
+    width: 30px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+/* Allow longer property values to wrap */
+.property-value {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.property-value-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.button-container {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.primary-button {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.file-tree {
+    margin-top: 10px;
+}
+
+.file-item {
+    padding: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.file-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.file-item.disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.folder-children {
+    margin-left: 10px;
+}
+
+.file-icon {
+    margin-right: 5px;
+}
+
+.selected-count, .selected-files-count {
+    margin: 10px 0;
+    font-style: italic;
+}
+
+.actions-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.action-section {
+    padding: 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.help-container {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Bulk property editor specific styles */
+.bulk-property-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 15px 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.property-list-section, .property-delete-section {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 10px;
+    height: auto;
+    max-height: 250px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.options-section {
+    margin: 15px 0;
+    padding: 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 5px 0;
+}
+
+.option-item input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.property-type-select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* For adding new properties */
+.new-property-container {
+    margin: 10px 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.new-property-container input {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.new-property-container select {
+    width: 120px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.new-property-container button {
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+/* Make sure input elements can't overflow */
+input, select, button {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.property-value input {
+    width: 100%;
+    min-height: 24px;
+}
+
+.property-name input {
+    width: 100%;
+}
+
+.property-type select {
+    width: 100%;
+}
+
+/* Delete property section */
+.property-delete-section .property-list .property-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.property-delete-section .property-list .property-name {
+    flex-grow: 1;
+    margin-right: 10px;
+    max-width: none;
+}
+
+.property-delete-section .property-list .property-actions {
+    width: 50px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Common styles for all modals */
+.yaml-property-manager-modal,
+.property-manager-modal,
+.template-selection-modal,
+.single-file-property-modal,
+.batch-file-selector-modal,
+.file-selector-modal {
+    padding: 20px;
+    min-width: 700px;
+    width: auto;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* Template selection specific */
+.template-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 5px;
+    box-sizing: border-box;
+}
+
+/* Common element styling */
+.yaml-property-manager-modal div,
+.property-manager-modal div,
+.template-selection-modal div,
+.single-file-property-modal div {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.button-container button {
+    min-width: 100px;
+}
+
+/* File selection container */
+.file-selection {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.file-selection button {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+
+/* Specific styles for SingleFilePropertyModal */
+.single-file-property-modal .property-item,
+.yaml-property-manager-modal .property-item {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    align-items: center !important;
+    margin-bottom: 8px !important;
+}
+
+.single-file-property-modal .property-name,
+.single-file-property-modal .property-type,
+.single-file-property-modal .property-value,
+.single-file-property-modal .property-actions,
+.yaml-property-manager-modal .property-name,
+.yaml-property-manager-modal .property-type,
+.yaml-property-manager-modal .property-value,
+.yaml-property-manager-modal .property-actions {
+    display: block !important;
+    overflow: hidden !important;
+}
+
+.single-file-property-modal .property-name,
+.yaml-property-manager-modal .property-name {
+    flex: 1 !important;
+    min-width: 100px !important;
+    max-width: 200px !important;
+}
+
+.single-file-property-modal .property-type,
+.yaml-property-manager-modal .property-type {
+    width: 120px !important;
+    flex-shrink: 0 !important;
+}
+
+.single-file-property-modal .property-value,
+.yaml-property-manager-modal .property-value {
+    flex: 2 !important;
+    min-width: 150px !important;
+}
+
+.single-file-property-modal .property-actions,
+.yaml-property-manager-modal .property-actions {
+    width: 100px !important;
+    flex-shrink: 0 !important;
+    text-align: center !important;
+}
+
+.property-value-input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.property-type-select {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Template property selection specific styles */
+.property-container .property-list .property-item {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    align-items: center !important;
+    margin-bottom: 8px !important;
+}
+
+.property-container .property-include {
+    width: 70px !important;
+    flex-shrink: 0 !important;
+    text-align: center !important;
+}
+
+.property-container .property-name {
+    flex: 1 !important;
+    min-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.property-container .property-value {
+    flex: 2 !important;
+    min-width: 150px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.property-container .property-consistent {
+    width: 120px !important;
+    flex-shrink: 0 !important;
+    text-align: center !important;
+}
+
+.select-all-container {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 10px !important;
+    width: 100% !important;
+}
+
+.select-all-container input[type="checkbox"] {
+    margin-right: 8px !important;
+}
+
+/* Modal header with back button */
+.modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal-header button {
+    margin-right: 10px;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+    .yaml-property-manager-modal,
+    .property-manager-modal {
+        width: 95%;
+        padding: 15px;
+        min-width: auto;
+    }
+
+    .property-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .property-name, .property-type, .property-value, .property-actions {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .actions-container {
+        grid-template-columns: 1fr;
+    }
+
+    .new-property-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .new-property-container input, 
+    .new-property-container select, 
+    .new-property-container button {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+@media screen and (max-width: 900px) {
+    .actions-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .property-manager-modal {
+        min-width: auto;
+        width: 95%;
+    }
+}

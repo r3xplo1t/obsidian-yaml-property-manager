@@ -1,0 +1,28 @@
+# Create .gitignore file
+@"
+# Build artifacts
+main.js
+main.js.map
+
+# Dependencies
+node_modules/
+
+# Local data
+data.json
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Obsidian workspace settings
+.obsidian/
+
+# Optional: you might want to ignore package-lock.json as well
+# package-lock.json
+"@ | Out-File -FilePath ".gitignore" -Encoding utf8
