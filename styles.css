@@ -465,6 +465,148 @@ input, select, button {
     margin: 0;
 }
 
+/* Styles for existing properties section */
+.existing-properties-section {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.existing-properties-list {
+    width: 100%;
+}
+
+.property-usage {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.property-examples {
+    font-size: 0.9em;
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Loading spinner */
+.property-scan-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+}
+
+.spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid var(--background-modifier-border);
+    border-top: 3px solid var(--interactive-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Make action buttons in existing properties more compact */
+.existing-properties-section .property-actions button {
+    padding: 2px 8px;
+    margin: 0 2px;
+    font-size: 0.9em;
+}
+
+/* Highlight rows on hover */
+.existing-properties-section .property-item:not(.header):hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* Property Reordering Section */
+.property-reorder-section {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.property-reorder-list {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.property-reorder-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 5px;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.property-reorder-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.property-drag-handle {
+    margin-right: 10px;
+    color: var(--text-muted);
+    cursor: grab;
+    font-size: 1.2em;
+}
+
+.property-reorder-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.property-reorder-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.property-reorder-buttons button {
+    padding: 2px 8px;
+    font-size: 0.9em;
+}
+
+.property-reorder-apply {
+    margin-top: 15px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 6px 12px;
+    width: 100%;
+}
+
+/* Drag and drop styling */
+.property-reorder-item.dragging {
+    opacity: 0.5;
+}
+
+.property-reorder-item.dragover {
+    border: 2px dashed var(--interactive-accent);
+    background-color: var(--background-modifier-hover);
+}
+
 /* Responsive styles */
 @media screen and (max-width: 768px) {
     .yaml-property-manager-modal,
@@ -510,4 +652,58 @@ input, select, button {
         min-width: auto;
         width: 95%;
     }
+}
+
+/* Styles for disabled reordering */
+.property-reorder-warning {
+    color: var(--text-error);
+    font-weight: 500;
+}
+
+.property-reorder-list.disabled {
+    opacity: 0.75;
+}
+
+.property-reorder-item.disabled {
+    cursor: default;
+    background-color: var(--background-secondary-alt);
+}
+
+.property-drag-handle.disabled {
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.property-reorder-usage {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-left: auto;
+    padding-right: 10px;
+}
+
+/* Styles for disabled reordering */
+.property-reorder-warning {
+    color: var(--text-error);
+    font-weight: 500;
+}
+
+.property-reorder-list.disabled {
+    opacity: 0.75;
+}
+
+.property-reorder-item.disabled {
+    cursor: default;
+    background-color: var(--background-secondary-alt);
+}
+
+.property-drag-handle.disabled {
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.property-reorder-usage {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-left: auto;
+    padding-right: 10px;
 }

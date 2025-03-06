@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS: YAMLPropertyManagerSettings = {
 
 export default class YAMLPropertyManagerPlugin extends Plugin {
 	settings: YAMLPropertyManagerSettings;
+	selectedFiles: TFile[] = []; // Added central file selection storage
 
 	async onload() {
 		await this.loadSettings();
@@ -207,12 +208,38 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
 		}
 	}
 	
-	// Navigation method to move between modals
+	// Debug logging helper
+	public debug(message: string, ...data: any[]) {
+		console.log(`[YAML Property Manager] ${message}`, ...data);
+	}
+	
+	// Navigation method to move between modals - UPDATED VERSION
 	navigateToModal(currentModal: Modal, targetModalType: string, ...args: any[]) {
 		// Close current modal
 		currentModal.close();
 		
-		// Open new modal based on type
+		// Handle special case for file selection
+		if (targetModalType === 'bulkEdit') {
+			// If files are explicitly provided, use them
+			if (Array.isArray(args[0]) && args[0].length > 0) {
+				this.debug(`Navigating to bulk edit with ${args[0].length} explicitly provided files`);
+				this.selectedFiles = args[0];
+			}
+			
+			// Check if we have files selected
+			if (this.selectedFiles.length === 0) {
+				this.debug('No files selected for bulk edit');
+				new Notice('Please select files first');
+				new PropertyManagerModal(this.app, this).open();
+				return;
+			}
+			
+			this.debug(`Opening bulk edit with ${this.selectedFiles.length} files`);
+			new BulkPropertyEditorModal(this.app, this, this.selectedFiles).open();
+			return;
+		}
+		
+		// Handle other modal types
 		switch (targetModalType) {
 			case 'main':
 				new PropertyManagerModal(this.app, this).open();
@@ -223,18 +250,26 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
 				}
 				break;
 			case 'template':
-				if (Array.isArray(args[0])) {
-					new TemplateSelectionModal(this.app, this, args[0]).open();
+				if (this.selectedFiles.length === 0 && Array.isArray(args[0]) && args[0].length > 0) {
+					this.selectedFiles = args[0];
 				}
-				break;
-			case 'bulkEdit':
-				if (Array.isArray(args[0])) {
-					new BulkPropertyEditorModal(this.app, this, args[0]).open();
+				
+				if (this.selectedFiles.length > 0) {
+					new TemplateSelectionModal(this.app, this, this.selectedFiles).open();
+				} else {
+					new Notice('Please select files first');
+					new PropertyManagerModal(this.app, this).open();
 				}
 				break;
 			case 'batchSelect':
 				if (typeof args[0] === 'function') {
-					new BatchFileSelectorModal(this.app, args[0]).open();
+					new BatchFileSelectorModal(this.app, (files: TFile[]) => {
+						if (files && files.length > 0) {
+							this.debug(`Batch selection returned ${files.length} files`);
+							this.selectedFiles = files;
+							args[0](files);
+						}
+					}).open();
 				}
 				break;
 		}
@@ -654,7 +689,10 @@ class TemplateSelectionModal extends Modal {
 		const backButton = headerContainer.createEl('button', { text: '← Back' });
 		backButton.style.marginRight = '10px';
 		backButton.addEventListener('click', () => {
-			this.plugin.navigateToModal(this, 'main');
+			// Open a new PropertyManagerModal
+			const mainModal = new PropertyManagerModal(this.app, this.plugin);
+			this.close();
+			mainModal.open();
 		});
 		
 		headerContainer.createEl('h2', { text: 'Select Template File' });
@@ -1087,7 +1125,7 @@ class PropertyManagerModal extends Modal {
 		
 		this.modalEl.style.width = '95%';
 		this.modalEl.style.maxWidth = '900px';
-
+	
 		contentEl.createEl('h2', { text: 'YAML Property Manager' });
 		
 		// Actions section
@@ -1130,9 +1168,11 @@ class PropertyManagerModal extends Modal {
 			if (activeView && activeView.file) {
 				const currentFolder = activeView.file.parent;
 				if (currentFolder) {
-					this.selectedFiles = this.app.vault.getMarkdownFiles()
+					// Store files in the plugin's central storage
+					this.plugin.selectedFiles = this.app.vault.getMarkdownFiles()
 						.filter(file => file.parent === currentFolder);
 					
+					this.plugin.debug(`Selected ${this.plugin.selectedFiles.length} files from current folder`);
 					this.updateSelectedFilesCount(fileSelectionContainer);
 				}
 			} else {
@@ -1146,75 +1186,65 @@ class PropertyManagerModal extends Modal {
 		browseButton.style.width = '100%';
 		browseButton.style.boxSizing = 'border-box';
 		browseButton.addEventListener('click', () => {
-			this.plugin.navigateToModal(this, 'batchSelect', (files: TFile[]) => {
-				if (files && files.length > 0) {
-					this.selectedFiles = files;
-					// This is a little trick - we need to reopen the main modal with the selected files
-					new PropertyManagerModal(this.app, this.plugin).open();
-					setTimeout(() => {
-						const mainModal = document.querySelector('.property-manager-modal');
-						if (mainModal) {
-							const fileSelectionContainer = mainModal.querySelector('.file-selection');
-							if (fileSelectionContainer) {
-								const countEl = fileSelectionContainer.querySelector('.selected-files-count');
-								if (countEl) {
-									countEl.textContent = `${files.length} files selected`;
-								}
-								
-								// Enable buttons
-								const buttons = mainModal.querySelectorAll('.primary-button') as NodeListOf<HTMLButtonElement>;
-								buttons.forEach(button => {
-									button.disabled = false;
-								});
-							}
-						}
-					}, 100);
-				}
-			});
+			this.browseFiles();
 		});
 		
 		// Selected files count
 		const selectedFilesCountEl = fileSelectionContainer.createEl('div', {
 			cls: 'selected-files-count',
-			text: 'No files selected'
+			text: this.plugin.selectedFiles.length > 0 
+				? `${this.plugin.selectedFiles.length} files selected` 
+				: 'No files selected'
 		});
 		
 		// Apply template button
 		const applyTemplateButton = batchContainer.createEl('button', {
 			text: 'Apply Template to Selected Files',
 			cls: 'primary-button',
-			attr: { disabled: true }
+			attr: { disabled: this.plugin.selectedFiles.length === 0 }
 		});
 		applyTemplateButton.style.width = '100%';
 		applyTemplateButton.style.boxSizing = 'border-box';
 		applyTemplateButton.addEventListener('click', () => {
-			if (this.selectedFiles.length > 0) {
-				this.plugin.navigateToModal(this, 'template', this.selectedFiles);
+			if (this.plugin.selectedFiles.length > 0) {
+				// Open template selection modal with the selected files
+				const templateModal = new TemplateSelectionModal(this.app, this.plugin, [...this.plugin.selectedFiles]);
+				this.close();
+				templateModal.open();
 			} else {
 				new Notice('Please select files first');
 			}
 		});
-
+	
 		// Bulk edit button
 		const bulkEditButton = batchContainer.createEl('button', {
 			text: 'Bulk Edit Properties',
 			cls: 'primary-button',
-			attr: { disabled: true }
+			attr: { disabled: this.plugin.selectedFiles.length === 0 }
 		});
 		bulkEditButton.style.width = '100%';
 		bulkEditButton.style.boxSizing = 'border-box';
 		bulkEditButton.addEventListener('click', () => {
-			if (this.selectedFiles.length > 0) {
-				this.plugin.navigateToModal(this, 'bulkEdit', this.selectedFiles);
+			this.plugin.debug(`Bulk edit clicked with ${this.plugin.selectedFiles.length} files selected`);
+			
+			if (this.plugin.selectedFiles.length > 0) {
+				// Open bulk edit modal with the selected files
+				const bulkEditModal = new BulkPropertyEditorModal(
+					this.app, 
+					this.plugin, 
+					[...this.plugin.selectedFiles]
+				);
+				this.close();
+				bulkEditModal.open();
 			} else {
 				new Notice('Please select files first');
 			}
 		});
-
+	
 		// Help section
 		const helpContainer = contentEl.createDiv({ cls: 'help-container' });
 		helpContainer.createEl('h3', { text: 'Help' });
-
+	
 		helpContainer.createEl('p', { 
 			text: 'This plugin helps you manage YAML frontmatter properties in your markdown files.' 
 		});
@@ -1223,8 +1253,8 @@ class PropertyManagerModal extends Modal {
 		featureList.style.width = '100%';
 		featureList.style.boxSizing = 'border-box';
 		featureList.style.paddingInlineStart = '20px';
-        
-        featureList.createEl('li', { text: 'Edit properties of individual files' }).style.width = '100%';
+		
+		featureList.createEl('li', { text: 'Edit properties of individual files' }).style.width = '100%';
 		featureList.createEl('li', { text: 'Apply properties from template files to multiple files' }).style.width = '100%';
 		featureList.createEl('li', { text: 'Maintain consistent property values across files' }).style.width = '100%';
 		featureList.createEl('li', { text: 'Preserve property order from templates' }).style.width = '100%';
@@ -1243,13 +1273,45 @@ class PropertyManagerModal extends Modal {
 	updateSelectedFilesCount(container: HTMLElement) {
 		const countEl = container.querySelector('.selected-files-count');
 		if (countEl) {
-			countEl.textContent = `${this.selectedFiles.length} files selected`;
+			countEl.textContent = this.plugin.selectedFiles.length === 0 
+				? 'No files selected' 
+				: `${this.plugin.selectedFiles.length} files selected`;
 		}
 		
 		// Enable/disable buttons
+		this.updateButtonState();
+	}
+
+	updateButtonState() {
+		// Enable/disable buttons
 		const buttons = this.contentEl.querySelectorAll('.primary-button') as NodeListOf<HTMLButtonElement>;
 		buttons.forEach(button => {
-			button.disabled = this.selectedFiles.length === 0;
+			button.disabled = this.plugin.selectedFiles.length === 0;
+		});
+	}
+
+	browseFiles() {
+    const batchSelector = new BatchFileSelectorModal(this.app, (files: TFile[]) => {
+        if (files && files.length > 0) {
+            this.plugin.debug(`Received ${files.length} files from batch selection`);
+            
+            // Store files in the plugin's storage
+            this.plugin.selectedFiles = [...files];
+            
+            // Reopen main modal to show updated selection
+            const mainModal = new PropertyManagerModal(this.app, this.plugin);
+            this.close();
+            mainModal.open();
+        }
+    });
+    batchSelector.open();
+	}
+	
+	updateButtonsState() {
+		// Enable/disable buttons
+		const buttons = this.contentEl.querySelectorAll('.primary-button') as NodeListOf<HTMLButtonElement>;
+		buttons.forEach(button => {
+			button.disabled = this.plugin.selectedFiles.length === 0;
 		});
 	}
 }
@@ -1319,7 +1381,18 @@ class BatchFileSelectorModal extends Modal {
 			attr: { disabled: true }
 		});
 		confirmButton.addEventListener('click', () => {
-			this.onSelect(this.selectedFiles);
+			// Make a copy of the selected files
+			const selectedFilesCopy = [...this.selectedFiles];
+			
+			const plugin = (this.app as any).plugins.plugins["yaml-property-manager"];
+			if (plugin) {
+				plugin.debug(`Batch selector confirming ${selectedFilesCopy.length} files`);
+			}
+			
+			// Call the onSelect callback with the selected files
+			this.onSelect(selectedFilesCopy);
+			
+			// Close this modal
 			this.close();
 		});
 		
@@ -1478,18 +1551,27 @@ class BatchFileSelectorModal extends Modal {
 	}
 }
 
-// Modal for bulk editing properties across multiple files
+// Complete BulkPropertyEditorModal class with property reordering feature
 class BulkPropertyEditorModal extends Modal {
 	plugin: YAMLPropertyManagerPlugin;
 	files: TFile[];
 	propertiesToModify: Record<string, any> = {};
 	propertiesToDelete: string[] = [];
 	preserveExisting: boolean = true;
+	
+	// New properties to track existing properties across files
+	existingProperties: Map<string, { count: number, examples: any[] }> = new Map();
+	totalFileCount: number = 0;
+	
+	// New properties for reordering feature
+	canReorderProperties: boolean = false;
+	propertyOrder: string[] = [];
 
 	constructor(app: App, plugin: YAMLPropertyManagerPlugin, files: TFile[]) {
 		super(app);
 		this.plugin = plugin;
 		this.files = files;
+		this.totalFileCount = files.length;
 	}
 
 	async onOpen() {
@@ -1510,7 +1592,10 @@ class BulkPropertyEditorModal extends Modal {
 		const backButton = headerContainer.createEl('button', { text: '← Back' });
 		backButton.style.marginRight = '10px';
 		backButton.addEventListener('click', () => {
-			this.plugin.navigateToModal(this, 'main');
+			// Open a new PropertyManagerModal
+			const mainModal = new PropertyManagerModal(this.app, this.plugin);
+			this.close();
+			mainModal.open();
 		});
 		
 		headerContainer.createEl('h2', { text: 'Bulk Edit Properties' });
@@ -1520,8 +1605,34 @@ class BulkPropertyEditorModal extends Modal {
 			text: `Editing properties across ${this.files.length} file${this.files.length !== 1 ? 's' : ''}` 
 		});
 		
+		// Show loading spinner while scanning files
+		const loadingEl = contentEl.createDiv({ cls: 'property-scan-loading' });
+		loadingEl.createEl('p', { text: 'Scanning files for existing properties...' });
+		loadingEl.createEl('div', { cls: 'spinner' });
+		
+		// Scan selected files for existing properties
+		await this.scanExistingProperties();
+		
+		// Check if property reordering is possible
+		await this.checkReorderingPossibility();
+		
+		// Remove loading element
+		loadingEl.remove();
+		
 		// Container for property editing
 		const propertyContainer = contentEl.createDiv({ cls: 'bulk-property-container' });
+		
+		// New section - Existing Properties
+		const existingPropertiesSection = propertyContainer.createDiv({ cls: 'existing-properties-section' });
+		existingPropertiesSection.createEl('h3', { text: 'Existing Properties' });
+		
+		const existingPropertiesList = existingPropertiesSection.createDiv({ cls: 'existing-properties-list' });
+		this.renderExistingProperties(existingPropertiesList);
+		
+		// New section - Property Reordering (only if possible)
+		const reorderSection = propertyContainer.createDiv({ cls: 'property-reorder-section' });
+		reorderSection.createEl('h3', { text: 'Reorder Properties' });
+		this.renderPropertyReordering(reorderSection);
 		
 		// Property list section
 		const propertyListSection = propertyContainer.createDiv({ cls: 'property-list-section' });
@@ -1587,6 +1698,474 @@ class BulkPropertyEditorModal extends Modal {
 		cancelButton.addEventListener('click', () => {
 			this.plugin.navigateToModal(this, 'main');
 		});
+	}
+	
+	// New method to scan all selected files for existing properties
+	async scanExistingProperties() {
+		this.existingProperties.clear();
+		
+		for (const file of this.files) {
+			try {
+				const fileProperties = await this.plugin.parseFileProperties(file);
+				
+				// Add each property to our tracking map
+				for (const [key, value] of Object.entries(fileProperties)) {
+					if (!this.existingProperties.has(key)) {
+						this.existingProperties.set(key, { 
+							count: 1, 
+							examples: [value] 
+						});
+					} else {
+						const propInfo = this.existingProperties.get(key);
+						if (propInfo) {
+							propInfo.count++;
+							// Keep up to 3 examples of values
+							if (propInfo.examples.length < 3 && 
+								!propInfo.examples.some(ex => JSON.stringify(ex) === JSON.stringify(value))) {
+								propInfo.examples.push(value);
+							}
+						}
+					}
+				}
+			} catch (error) {
+				console.error(`Error scanning properties in file ${file.path}:`, error);
+			}
+		}
+	}
+	
+	// New method to check if reordering is possible
+	async checkReorderingPossibility() {
+		// If no files are selected, reordering is not possible
+		if (this.files.length === 0) {
+			this.canReorderProperties = false;
+			this.propertyOrder = [];
+			return;
+		}
+		
+		// Collect all unique properties across all files
+		const allUniqueProps = new Set<string>();
+		
+		// Properties that exist in all files
+		let commonProps: Set<string> | null = null;
+		
+		// Process each file
+		for (let i = 0; i < this.files.length; i++) {
+			const fileProps = await this.plugin.parseFileProperties(this.files[i]);
+			const filePropsSet = new Set(Object.keys(fileProps));
+			
+			// Add to unique properties
+			for (const prop of filePropsSet) {
+				allUniqueProps.add(prop);
+			}
+			
+			// For first file, initialize common properties
+			if (i === 0) {
+				commonProps = new Set(filePropsSet);
+			} else if (commonProps) {
+				// For subsequent files, keep only properties that exist in all files
+				for (const prop of commonProps) {
+					if (!filePropsSet.has(prop)) {
+						commonProps.delete(prop);
+					}
+				}
+				
+				// Check if any new properties exist in this file but not in previous files
+				for (const prop of filePropsSet) {
+					if (!commonProps.has(prop)) {
+						// This property doesn't exist in all files
+						this.canReorderProperties = false;
+					}
+				}
+			}
+		}
+		
+		// If we've processed files and all properties are common, reordering is possible
+		this.canReorderProperties = commonProps !== null && 
+								commonProps.size === allUniqueProps.size && 
+								commonProps.size > 0;
+		
+		// Set property order (all unique properties)
+		this.propertyOrder = Array.from(allUniqueProps);
+	}
+	
+	// New method to render the property reordering section
+	// Fixed renderPropertyReordering method (to remove duplicate text)
+	renderPropertyReordering(container: HTMLElement) {
+		container.empty();
+		
+		if (this.propertyOrder.length === 0) {
+			container.createEl('p', { 
+				text: 'No properties found in the selected files.'
+			});
+			return;
+		}
+		
+		if (!this.canReorderProperties) {
+			container.createEl('p', { 
+				text: 'All selected files don\'t have identical properties. You cannot reorder them.',
+				cls: 'property-reorder-warning'
+			});
+			
+			// Still show properties, but in a disabled state
+			const listContainer = container.createEl('div', { cls: 'property-reorder-list disabled' });
+			
+			for (const prop of this.propertyOrder) {
+				const item = listContainer.createEl('div', { 
+					cls: 'property-reorder-item disabled',
+					attr: { 'data-property': prop }
+				});
+				
+				// Add property name
+				const dragHandle = item.createEl('div', { cls: 'property-drag-handle disabled' });
+				dragHandle.createEl('span', { text: '≡' });
+				
+				item.createEl('div', { text: prop, cls: 'property-reorder-name' });
+				
+				// Show usage information from existingProperties
+				const propInfo = this.existingProperties.get(prop);
+				if (propInfo) {
+					const percentage = Math.round((propInfo.count / this.totalFileCount) * 100);
+					const usageInfo = item.createEl('div', { 
+						text: `${propInfo.count}/${this.totalFileCount} (${percentage}%)`, 
+						cls: 'property-reorder-usage' 
+					});
+				}
+			}
+			
+			return;
+		}
+		
+		// If reordering is possible, show the normal interface
+		container.createEl('p', { 
+			text: 'All selected files have identical properties. You can reorder them below.'
+		});
+		
+		// Create the sortable list
+		const listContainer = container.createEl('div', { cls: 'property-reorder-list' });
+		
+		for (let i = 0; i < this.propertyOrder.length; i++) {
+			const prop = this.propertyOrder[i];
+			const item = listContainer.createEl('div', { 
+				cls: 'property-reorder-item',
+				attr: { 'data-property': prop }
+			});
+			
+			// Add drag handle
+			const dragHandle = item.createEl('div', { cls: 'property-drag-handle' });
+			dragHandle.createEl('span', { text: '≡' });
+			
+			// Add property name
+			item.createEl('div', { text: prop, cls: 'property-reorder-name' });
+			
+			// Add up/down buttons
+			const buttonsContainer = item.createEl('div', { cls: 'property-reorder-buttons' });
+			
+			if (i > 0) {
+				const upButton = buttonsContainer.createEl('button', { text: '↑' });
+				upButton.addEventListener('click', () => {
+					this.moveProperty(i, i - 1);
+					this.renderPropertyReordering(container);
+				});
+			}
+			
+			if (i < this.propertyOrder.length - 1) {
+				const downButton = buttonsContainer.createEl('button', { text: '↓' });
+				downButton.addEventListener('click', () => {
+					this.moveProperty(i, i + 1);
+					this.renderPropertyReordering(container);
+				});
+			}
+		}
+		
+		// Add button to apply the new order
+		const applyButton = container.createEl('button', { 
+			text: 'Apply This Order to All Selected Files',
+			cls: 'property-reorder-apply'
+		});
+		
+		applyButton.addEventListener('click', async () => {
+			await this.applyPropertyOrder();
+		});
+		
+		// Set up drag-and-drop functionality
+		this.setupDragAndDrop(listContainer);
+	}
+	
+	// Helper to move a property in the order array
+	moveProperty(fromIndex: number, toIndex: number) {
+		if (fromIndex < 0 || fromIndex >= this.propertyOrder.length || 
+			toIndex < 0 || toIndex >= this.propertyOrder.length) {
+			return;
+		}
+		
+		const item = this.propertyOrder[fromIndex];
+		this.propertyOrder.splice(fromIndex, 1);
+		this.propertyOrder.splice(toIndex, 0, item);
+	}
+	
+	// Set up drag and drop for reordering
+	// Updated setupDragAndDrop method with safety checks
+	setupDragAndDrop(container: HTMLElement) {
+		// Don't enable drag and drop for disabled items
+		if (container.hasClass('disabled')) {
+			return;
+		}
+		
+		const items = container.querySelectorAll('.property-reorder-item');
+		
+		items.forEach(item => {
+			// Skip disabled items
+			if (item.hasClass('disabled')) {
+				return;
+			}
+			
+			item.setAttribute('draggable', 'true');
+			
+			item.addEventListener('dragstart', (e) => {
+				if (!(e instanceof DragEvent) || !e.dataTransfer) return;
+				
+				e.dataTransfer.effectAllowed = 'move';
+				e.dataTransfer.setData('text/plain', item.getAttribute('data-property') || '');
+				
+				// Add dragging class
+				item.addClass('dragging');
+			});
+			
+			item.addEventListener('dragend', () => {
+				// Remove dragging class
+				item.removeClass('dragging');
+			});
+			
+			item.addEventListener('dragover', (e) => {
+				if (!(e instanceof DragEvent)) return;
+				
+				e.preventDefault();
+				e.stopPropagation();
+				e.dataTransfer.dropEffect = 'move';
+				
+				// Add a class to show where the item will be dropped
+				item.addClass('dragover');
+			});
+			
+			item.addEventListener('dragleave', () => {
+				// Remove dragover class
+				item.removeClass('dragover');
+			});
+			
+			item.addEventListener('drop', (e) => {
+				if (!(e instanceof DragEvent) || !e.dataTransfer) return;
+				
+				e.preventDefault();
+				e.stopPropagation();
+				
+				const draggedProp = e.dataTransfer.getData('text/plain');
+				const targetProp = item.getAttribute('data-property') || '';
+				
+				// Find indices
+				const fromIndex = this.propertyOrder.indexOf(draggedProp);
+				const toIndex = this.propertyOrder.indexOf(targetProp);
+				
+				if (fromIndex !== -1 && toIndex !== -1) {
+					this.moveProperty(fromIndex, toIndex);
+					this.renderPropertyReordering(container);
+				}
+				
+				// Remove dragover class
+				item.removeClass('dragover');
+			});
+		});
+	}
+	
+	// Apply the new property order to all files
+	async applyPropertyOrder() {
+		let successCount = 0;
+		let errorCount = 0;
+		
+		for (const file of this.files) {
+			try {
+				// Get existing properties
+				const fileProps = await this.plugin.parseFileProperties(file);
+				
+				// Create a new object with properties in the specified order
+				const orderedProps: Record<string, any> = {};
+				for (const prop of this.propertyOrder) {
+					if (prop in fileProps) {
+						orderedProps[prop] = fileProps[prop];
+					}
+				}
+				
+				// Apply the ordered properties
+				const success = await this.plugin.applyProperties(file, orderedProps, false);
+				if (success) {
+					successCount++;
+				} else {
+					errorCount++;
+				}
+			} catch (error) {
+				console.error(`Error reordering properties in file ${file.path}:`, error);
+				errorCount++;
+			}
+		}
+		
+		// Show results
+		new Notice(`Reordered properties in ${successCount} files successfully. ${errorCount} errors.`);
+	}
+	
+	// New method to render the existing properties section
+	renderExistingProperties(container: HTMLElement) {
+		container.empty();
+		
+		if (this.existingProperties.size === 0) {
+			container.createEl('p', { text: 'No properties found in the selected files.' });
+			return;
+		}
+		
+		// Create header row
+		const headerRow = container.createEl('div', { cls: 'property-item header' });
+		headerRow.style.display = 'flex';
+		headerRow.style.width = '100%';
+		headerRow.style.flexWrap = 'nowrap';
+		
+		const nameHeader = headerRow.createEl('div', { text: 'Property Name', cls: 'property-name' });
+		nameHeader.style.flex = '1';
+		nameHeader.style.minWidth = '120px';
+		
+		const typeHeader = headerRow.createEl('div', { text: 'Most Common Type', cls: 'property-type' });
+		typeHeader.style.width = '120px';
+		typeHeader.style.flexShrink = '0';
+		
+		const usageHeader = headerRow.createEl('div', { text: 'Usage', cls: 'property-usage' });
+		usageHeader.style.width = '120px';
+		usageHeader.style.flexShrink = '0';
+		
+		const examplesHeader = headerRow.createEl('div', { text: 'Sample Values', cls: 'property-examples' });
+		examplesHeader.style.flex = '2';
+		examplesHeader.style.minWidth = '150px';
+		
+		const actionsHeader = headerRow.createEl('div', { text: 'Actions', cls: 'property-actions' });
+		actionsHeader.style.width = '120px';
+		actionsHeader.style.flexShrink = '0';
+		actionsHeader.style.textAlign = 'center';
+		
+		// Sort properties by usage (most used first)
+		const sortedProps = Array.from(this.existingProperties.entries())
+			.sort((a, b) => b[1].count - a[1].count);
+		
+		// Add each existing property
+		for (const [propName, propInfo] of sortedProps) {
+			const row = container.createEl('div', { cls: 'property-item' });
+			row.style.display = 'flex';
+			row.style.width = '100%';
+			row.style.flexWrap = 'nowrap';
+			row.style.alignItems = 'center';
+			row.style.marginBottom = '5px';
+			
+			// Property name
+			const nameCell = row.createEl('div', { text: propName, cls: 'property-name' });
+			nameCell.style.flex = '1';
+			nameCell.style.minWidth = '120px';
+			
+			// Property type (inferred from examples)
+			const mostLikelyType = this.inferPropertyType(propInfo.examples);
+			const typeCell = row.createEl('div', { text: mostLikelyType, cls: 'property-type' });
+			typeCell.style.width = '120px';
+			typeCell.style.flexShrink = '0';
+			
+			// Usage statistics
+			const percentage = Math.round((propInfo.count / this.totalFileCount) * 100);
+			const usageCell = row.createEl('div', { 
+				text: `${propInfo.count}/${this.totalFileCount} (${percentage}%)`, 
+				cls: 'property-usage' 
+			});
+			usageCell.style.width = '120px';
+			usageCell.style.flexShrink = '0';
+			
+			// Sample values
+			const examplesCell = row.createEl('div', { cls: 'property-examples' });
+			examplesCell.style.flex = '2';
+			examplesCell.style.minWidth = '150px';
+			examplesCell.style.overflow = 'hidden';
+			examplesCell.style.textOverflow = 'ellipsis';
+			
+			// Format example values
+			const exampleValues = propInfo.examples
+				.map(val => formatValuePreview(val))
+				.join(', ');
+			examplesCell.setText(exampleValues);
+			
+			// Actions
+			const actionsCell = row.createEl('div', { cls: 'property-actions' });
+			actionsCell.style.width = '120px';
+			actionsCell.style.flexShrink = '0';
+			actionsCell.style.display = 'flex';
+			actionsCell.style.justifyContent = 'center';
+			actionsCell.style.gap = '5px';
+			
+			// Add "Edit" button
+			const editButton = actionsCell.createEl('button', { text: 'Edit' });
+			editButton.addEventListener('click', () => {
+				// Add to properties to modify if not already there
+				if (!(propName in this.propertiesToModify)) {
+					// Use the first example as the default value
+					this.propertiesToModify[propName] = propInfo.examples[0];
+					// Refresh the property list
+					const propertyList = this.contentEl.querySelector('.property-list') as HTMLElement;
+					if (propertyList) {
+						this.renderPropertyList(propertyList);
+					}
+				}
+				
+				// Scroll to the property list section
+				const propertyListSection = this.contentEl.querySelector('.property-list-section');
+				if (propertyListSection) {
+					propertyListSection.scrollIntoView({ behavior: 'smooth' });
+				}
+			});
+			
+			// Add "Delete" button
+			const deleteButton = actionsCell.createEl('button', { text: 'Delete' });
+			deleteButton.addEventListener('click', () => {
+				// Add to properties to delete if not already there
+				if (!this.propertiesToDelete.includes(propName)) {
+					this.propertiesToDelete.push(propName);
+					// Refresh the delete list
+					const deleteList = this.contentEl.querySelector('.delete-property-list') as HTMLElement;
+					if (deleteList) {
+						this.renderDeleteList(deleteList);
+					}
+				}
+				
+				// Scroll to the delete section
+				const deleteSection = this.contentEl.querySelector('.property-delete-section');
+				if (deleteSection) {
+					deleteSection.scrollIntoView({ behavior: 'smooth' });
+				}
+			});
+		}
+	}
+	
+	// Helper method to infer property type from examples
+	inferPropertyType(examples: any[]): string {
+		if (examples.length === 0) return 'Unknown';
+		
+		// Check first example
+		const firstExample = examples[0];
+		
+		if (typeof firstExample === 'number') return 'Number';
+		if (typeof firstExample === 'boolean') return 'Checkbox';
+		if (firstExample instanceof Date) return 'Date';
+		if (Array.isArray(firstExample)) return 'List';
+		
+		// Check if it looks like a date string
+		if (typeof firstExample === 'string') {
+			// Try to detect date strings like YYYY-MM-DD
+			const datePattern = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2})?/;
+			if (datePattern.test(firstExample)) {
+				return 'Date';
+			}
+		}
+		
+		return 'Text';
 	}
 	
 	renderPropertyList(container: HTMLElement) {
