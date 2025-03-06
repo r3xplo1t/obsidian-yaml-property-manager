@@ -235,7 +235,7 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
 			}
 			
 			this.debug(`Opening bulk edit with ${this.selectedFiles.length} files`);
-			new BulkPropertyEditorModal(this.app, this, this.selectedFiles).open();
+			new BulkPropertyEditorModal(this.app, this, [...this.selectedFiles]).open();
 			return;
 		}
 		
@@ -255,7 +255,7 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
 				}
 				
 				if (this.selectedFiles.length > 0) {
-					new TemplateSelectionModal(this.app, this, this.selectedFiles).open();
+					new TemplateSelectionModal(this.app, this, [...this.selectedFiles]).open();
 				} else {
 					new Notice('Please select files first');
 					new PropertyManagerModal(this.app, this).open();
@@ -266,7 +266,7 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
 					new BatchFileSelectorModal(this.app, (files: TFile[]) => {
 						if (files && files.length > 0) {
 							this.debug(`Batch selection returned ${files.length} files`);
-							this.selectedFiles = files;
+							this.selectedFiles = [...files];
 							args[0](files);
 						}
 					}).open();
@@ -1208,9 +1208,7 @@ class PropertyManagerModal extends Modal {
 		applyTemplateButton.addEventListener('click', () => {
 			if (this.plugin.selectedFiles.length > 0) {
 				// Open template selection modal with the selected files
-				const templateModal = new TemplateSelectionModal(this.app, this.plugin, [...this.plugin.selectedFiles]);
-				this.close();
-				templateModal.open();
+				this.plugin.navigateToModal(this, 'template');
 			} else {
 				new Notice('Please select files first');
 			}
@@ -1228,46 +1226,16 @@ class PropertyManagerModal extends Modal {
 			this.plugin.debug(`Bulk edit clicked with ${this.plugin.selectedFiles.length} files selected`);
 			
 			if (this.plugin.selectedFiles.length > 0) {
-				// Open bulk edit modal with the selected files
-				const bulkEditModal = new BulkPropertyEditorModal(
-					this.app, 
-					this.plugin, 
-					[...this.plugin.selectedFiles]
-				);
-				this.close();
-				bulkEditModal.open();
+				this.plugin.navigateToModal(this, 'bulkEdit');
 			} else {
 				new Notice('Please select files first');
 			}
 		});
 	
-		// Help section
-		const helpContainer = contentEl.createDiv({ cls: 'help-container' });
-		helpContainer.createEl('h3', { text: 'Help' });
+		// Rest of the code...
 	
-		helpContainer.createEl('p', { 
-			text: 'This plugin helps you manage YAML frontmatter properties in your markdown files.' 
-		});
-		
-		const featureList = helpContainer.createEl('ul');
-		featureList.style.width = '100%';
-		featureList.style.boxSizing = 'border-box';
-		featureList.style.paddingInlineStart = '20px';
-		
-		featureList.createEl('li', { text: 'Edit properties of individual files' }).style.width = '100%';
-		featureList.createEl('li', { text: 'Apply properties from template files to multiple files' }).style.width = '100%';
-		featureList.createEl('li', { text: 'Maintain consistent property values across files' }).style.width = '100%';
-		featureList.createEl('li', { text: 'Preserve property order from templates' }).style.width = '100%';
-		featureList.createEl('li', { text: 'Bulk edit properties across multiple files without templates' }).style.width = '100%';
-		featureList.createEl('li', { text: 'Specify property types to match Obsidian\'s property system' }).style.width = '100%';
-		
-		// Close button
-		const closeButton = contentEl.createEl('button', { text: 'Close' });
-		closeButton.style.width = 'auto';
-		closeButton.style.boxSizing = 'border-box';
-		closeButton.addEventListener('click', () => {
-			this.close();
-		});
+		// Make sure we update button states
+		this.updateButtonState();
 	}
 	
 	updateSelectedFilesCount(container: HTMLElement) {
@@ -1291,20 +1259,18 @@ class PropertyManagerModal extends Modal {
 	}
 
 	browseFiles() {
-    const batchSelector = new BatchFileSelectorModal(this.app, (files: TFile[]) => {
-        if (files && files.length > 0) {
-            this.plugin.debug(`Received ${files.length} files from batch selection`);
-            
-            // Store files in the plugin's storage
-            this.plugin.selectedFiles = [...files];
-            
-            // Reopen main modal to show updated selection
-            const mainModal = new PropertyManagerModal(this.app, this.plugin);
-            this.close();
-            mainModal.open();
-        }
-    });
-    batchSelector.open();
+		const batchSelector = new BatchFileSelectorModal(this.app, (files: TFile[]) => {
+			if (files && files.length > 0) {
+				this.plugin.debug(`Received ${files.length} files from batch selection`);
+				
+				// Store files in the plugin's storage
+				this.plugin.selectedFiles = [...files];
+				
+				// Reopen main modal to show updated selection
+				this.plugin.navigateToModal(this, 'main');
+			}
+		});
+		batchSelector.open();
 	}
 	
 	updateButtonsState() {
@@ -1340,14 +1306,19 @@ class BatchFileSelectorModal extends Modal {
 		headerContainer.style.display = 'flex';
 		headerContainer.style.alignItems = 'center';
 		headerContainer.style.marginBottom = '15px';
-		
+
 		const backButton = headerContainer.createEl('button', { text: '← Back' });
 		backButton.style.marginRight = '10px';
 		backButton.addEventListener('click', () => {
 			// We need special handling for this modal since it uses a callback
 			backButton.disabled = true; // Prevent multiple clicks
 			this.close();
-			new PropertyManagerModal(this.app, (this.app as any).plugins.plugins["yaml-property-manager"]).open();
+			
+			// Get the plugin instance properly
+			const plugin = (this.app as any).plugins.plugins["yaml-property-manager"];
+			if (plugin) {
+				plugin.navigateToModal(this, 'main');
+			}
 		});
 		
 		headerContainer.createEl('h2', { text: 'Select Files' });
