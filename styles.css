@@ -303,12 +303,15 @@
 }
 
 .options-section {
-    margin: 15px 0;
-    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto !important;
+    overflow-x: visible !important;
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+    width: 100% !important;
     box-sizing: border-box;
-    width: 100%;
 }
 
 .option-item {

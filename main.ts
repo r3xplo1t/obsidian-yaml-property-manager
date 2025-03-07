@@ -1707,7 +1707,7 @@ class BulkPropertyEditorModal extends Modal {
 		});
 		
 		// Options section
-		const optionsSection = contentEl.createDiv({ cls: 'options-section' });
+		const optionsSection = propertyContainer.createDiv({ cls: 'options-section' });
 		optionsSection.style.width = '100%';
 		optionsSection.style.overflowX = 'visible';
 		optionsSection.createEl('h3', { text: 'Options' });
