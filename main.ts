@@ -3090,160 +3090,209 @@ class YAMLPropertyManagerSettingTab extends PluginSettingTab {
 	}
 	
 	// Render template paths as a hierarchy
-	renderTemplatePathsHierarchy(container: HTMLElement) {
-		// First, build a hierarchical tree structure
-		interface TreeNode {
-			name: string;
-			path: string;
-			isDirectory: boolean;
-			children: TreeNode[];
-			templatePathIndex?: number; // Reference to the original index in settings
-		}
-		
-		const rootNode: TreeNode = {
-			name: this.app.vault.getName(),
-			path: '',
-			isDirectory: true,
-			children: []
-		};
-		
-		// Helper to find or create a node for a path
-		const getNodeForPath = (path: string, isDirectory: boolean): TreeNode => {
-			if (path === '') return rootNode;
-			
-			const parts = path.split('/');
-			let currentNode = rootNode;
-			let currentPath = '';
-			
-			// Navigate/create the tree structure
-			for (let i = 0; i < parts.length; i++) {
-				const part = parts[i];
-				currentPath = currentPath ? `${currentPath}/${part}` : part;
-				const isLastPart = i === parts.length - 1;
-				
-				// Look for existing node
-				let found = currentNode.children.find(c => c.name === part);
-				
-				if (!found) {
-					// Create a new node
-					const newNode: TreeNode = {
-						name: part,
-						path: currentPath,
-						isDirectory: isLastPart ? isDirectory : true, // Intermediate nodes are always directories
-						children: []
-					};
-					
-					currentNode.children.push(newNode);
-					found = newNode;
-				}
-				
-				currentNode = found;
-			}
-			
-			return currentNode;
-		};
-		
-		// Add all template paths to the tree
-		this.plugin.settings.templatePaths.forEach((tp, index) => {
-			const node = getNodeForPath(tp.path, tp.type === 'directory');
-			node.templatePathIndex = index; // Store reference to original index
-		});
-		
-		// Sort helper for tree nodes
-		const sortTreeNodes = (nodes: TreeNode[]) => {
-			// Sort by type first (directories before files), then by name
-			nodes.sort((a, b) => {
-				if (a.isDirectory !== b.isDirectory) {
-					return a.isDirectory ? -1 : 1;
-				}
-				return a.name.localeCompare(b.name);
-			});
-			
-			// Recursively sort children
-			for (const node of nodes) {
-				if (node.children.length > 0) {
-					sortTreeNodes(node.children);
-				}
-			}
-		};
-		
-		// Sort the tree
-		sortTreeNodes(rootNode.children);
-		
-		// Render the tree structure
-		const renderTree = (node: TreeNode, container: HTMLElement, level: number = 0) => {
-			if (node !== rootNode) {
-				const itemEl = container.createDiv({ cls: 'template-tree-item' });
-				
-				// Container for icon, name, and remove button
-				const itemHeader = itemEl.createDiv({ cls: 'template-tree-header' });
-				itemHeader.style.paddingLeft = `${level * 20}px`;
-				
-				// Icon
-				const icon = itemHeader.createSpan({ cls: 'template-path-icon' });
-				icon.textContent = node.isDirectory ? '📁 ' : '📄 ';
-				
-				// Path name
-				const nameEl = itemHeader.createSpan({ 
-					text: node.name,
-					cls: 'template-path-name'
-				});
-				nameEl.style.flex = '1';
-				
-				// Remove button (only if it's an actual template path, not just a path in the hierarchy)
-				if (node.templatePathIndex !== undefined) {
-					const removeButton = itemHeader.createEl('button', { text: 'Remove' });
-					removeButton.style.marginLeft = '8px';
-					
-					removeButton.addEventListener('click', async (e) => {
-						e.stopPropagation();
-						
-						// Remove this template path
-						this.plugin.settings.templatePaths.splice(node.templatePathIndex, 1);
-						await this.plugin.saveSettings();
-						this.display(); // Refresh view
-					});
-				}
-			}
-			
-			// Render children
-			if (node.children.length > 0) {
-				const childrenContainer = container.createDiv({ cls: 'template-tree-children' });
-				childrenContainer.style.display = node === rootNode ? 'block' : 'none';
-				
-				for (const child of node.children) {
-					renderTree(child, childrenContainer, level + 1);
-				}
-				
-				// Make folders expandable
-				if (node !== rootNode && node.isDirectory) {
-					const header = container.querySelector('.template-tree-header:last-of-type');
-					if (header) {
-						header.addEventListener('click', (e) => {
-							if (e.target instanceof HTMLButtonElement) return; // Don't toggle if clicking the remove button
-							
-							const folderIcon = header.querySelector('.template-path-icon');
-							const childrenDiv = header.parentElement?.querySelector('.template-tree-children');
-							
-							if (childrenDiv) {
-								// Cast to HTMLElement to access style property
-								const childrenDivHtml = childrenDiv as HTMLElement;
-								const isExpanded = childrenDivHtml.style.display !== 'none';
-								childrenDivHtml.style.display = isExpanded ? 'none' : 'block';
-								
-								if (folderIcon) {
-									folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
-								}
-							}
-						});
-					}
-				}
-			}
-		};
-		
-		// Render the entire tree
-		renderTree(rootNode, container);
-	}
+	// Render template paths as a hierarchy
+// Render template paths as a hierarchy
+// Render template paths as a hierarchy
+// Render template paths as a hierarchy
+renderTemplatePathsHierarchy(container: HTMLElement) {
+    // Clear the container first
+    container.empty();
+    
+    // First, build a hierarchical tree structure
+    interface TreeNode {
+        name: string;
+        path: string;
+        isDirectory: boolean;
+        children: TreeNode[];
+        templatePathIndex?: number; // Reference to the original index in settings
+    }
+    
+    const rootNode: TreeNode = {
+        name: this.app.vault.getName(),
+        path: '',
+        isDirectory: true,
+        children: []
+    };
+    
+    // Helper to find or create a node for a path
+    const getNodeForPath = (path: string, isDirectory: boolean): TreeNode => {
+        if (path === '') return rootNode;
+        
+        const parts = path.split('/');
+        let currentNode = rootNode;
+        let currentPath = '';
+        
+        // Navigate/create the tree structure
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            currentPath = currentPath ? `${currentPath}/${part}` : part;
+            const isLastPart = i === parts.length - 1;
+            
+            // Look for existing node
+            let found = currentNode.children.find(c => c.name === part);
+            
+            if (!found) {
+                // Create a new node
+                const newNode: TreeNode = {
+                    name: part,
+                    path: currentPath,
+                    isDirectory: isLastPart ? isDirectory : true, // Intermediate nodes are always directories
+                    children: []
+                };
+                
+                currentNode.children.push(newNode);
+                found = newNode;
+            }
+            
+            currentNode = found;
+        }
+        
+        return currentNode;
+    };
+    
+    // Add all template paths to the tree
+    this.plugin.settings.templatePaths.forEach((tp, index) => {
+        const node = getNodeForPath(tp.path, tp.type === 'directory');
+        node.templatePathIndex = index; // Store reference to original index
+    });
+    
+    // Sort helper for tree nodes
+    const sortTreeNodes = (nodes: TreeNode[]) => {
+        // Sort by type first (directories before files), then by name
+        nodes.sort((a, b) => {
+            if (a.isDirectory !== b.isDirectory) {
+                return a.isDirectory ? -1 : 1;
+            }
+            return a.name.localeCompare(b.name);
+        });
+        
+        // Recursively sort children
+        for (const node of nodes) {
+            if (node.children.length > 0) {
+                sortTreeNodes(node.children);
+            }
+        }
+    };
+    
+    // Sort the tree
+    sortTreeNodes(rootNode.children);
+    
+    // Create a unique ID for each node
+    let nodeCounter = 0;
+    
+    // Simple recursive render function that uses data attributes for connections
+    const renderNode = (node: TreeNode, parentEl: HTMLElement, level: number = 0) => {
+        if (node === rootNode) {
+            // Root node - just render children directly
+            for (const child of node.children) {
+                if (child.name !== "Obsidian") { // Skip the Obsidian node
+                    renderNode(child, parentEl, level);
+                }
+            }
+            return;
+        }
+        
+        // Generate a unique ID for this node
+        const nodeId = `template-node-${nodeCounter++}`;
+        const childrenId = `children-${nodeId}`;
+        
+        // Create node container
+        const nodeEl = parentEl.createDiv({ 
+            cls: 'template-node',
+            attr: { 'data-node-id': nodeId }
+        });
+        
+        // Create the header (with click handler for folders)
+        const headerEl = nodeEl.createDiv({
+            cls: 'template-node-header' + (node.isDirectory ? ' is-folder' : '')
+        });
+        headerEl.style.paddingLeft = `${level * 20}px`;
+        
+        // Add folder/file icon
+        const iconEl = headerEl.createSpan({ cls: 'template-node-icon' });
+        iconEl.textContent = node.isDirectory ? '📁 ' : '📄 ';
+        
+        // Add name
+        const nameEl = headerEl.createSpan({
+            text: node.name,
+            cls: 'template-node-name'
+        });
+        
+        // Add remove button
+        const removeBtn = headerEl.createEl('button', {
+            text: 'Remove',
+            cls: 'template-node-remove'
+        });
+        
+        // Handle remove button click
+        removeBtn.addEventListener('click', async (e) => {
+            e.stopPropagation(); // Prevent expanding/collapsing
+            
+            if (node.templatePathIndex !== undefined) {
+                // Direct template path
+                this.plugin.settings.templatePaths.splice(node.templatePathIndex, 1);
+            } else {
+                // Find all child templates
+                const pathPrefix = node.path + '/';
+                const indicesToRemove: number[] = [];
+                
+                this.plugin.settings.templatePaths.forEach((tp, index) => {
+                    if (tp.path === node.path || tp.path.startsWith(pathPrefix)) {
+                        indicesToRemove.push(index);
+                    }
+                });
+                
+                // Remove in reverse order
+                for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                    this.plugin.settings.templatePaths.splice(indicesToRemove[i], 1);
+                }
+            }
+            
+            await this.plugin.saveSettings();
+            this.display(); // Refresh the entire display
+        });
+        
+        // If this is a directory node, add children container
+        if (node.isDirectory && node.children.length > 0) {
+            // Create children container (initially collapsed)
+            const childrenEl = nodeEl.createDiv({
+                cls: 'template-node-children',
+                attr: { 'id': childrenId }
+            });
+            childrenEl.style.display = 'none'; // Start collapsed
+            
+            // Add expand/collapse handler to the header
+            headerEl.addEventListener('click', (e) => {
+                // Only toggle if not clicking the remove button
+                if (!(e.target instanceof HTMLButtonElement)) {
+                    const isExpanded = childrenEl.style.display !== 'none';
+                    
+                    // Toggle display
+                    childrenEl.style.display = isExpanded ? 'none' : 'block';
+                    
+                    // Update icon
+                    iconEl.textContent = isExpanded ? '📁 ' : '📂 ';
+                }
+            });
+            
+            // Render children
+            for (const child of node.children) {
+                renderNode(child, childrenEl, level + 1);
+            }
+        }
+    };
+    
+    // Render the entire tree
+    renderNode(rootNode, container);
+    
+    // Add an info message if no templates are configured
+    if (rootNode.children.length === 0) {
+        container.createEl('p', {
+            text: 'No template paths configured. Add template files or directories below.',
+            cls: 'setting-item-description'
+        });
+    }
+}
 }
 
 // Improved Folder selector modal with nested directories
@@ -3468,117 +3517,151 @@ class TemplateFileSelectorModal extends Modal {
     }
     
     addFolderToTree(parentEl: HTMLElement, folder: TFolder, selectionCountEl: HTMLElement, level: number = 0) {
-        // Don't add hidden folders
-        if (folder.isRoot() || !folder.path.startsWith('.')) {
-            // Create folder item
-            const folderItem = parentEl.createDiv({ cls: 'file-tree-item folder-item' });
-            
-            // Header row with checkbox
-            const headerRow = folderItem.createDiv({ cls: 'file-tree-header' });
-            headerRow.style.paddingLeft = (level * 20) + 'px';
-            
-            // Checkbox for folder selection
-            const checkbox = headerRow.createEl('input', {
-                type: 'checkbox',
-                cls: 'folder-checkbox'
-            });
-            checkbox.style.marginRight = '8px';
-            
-            // Folder icon
-            const folderIcon = headerRow.createSpan({ cls: 'folder-icon' });
-            folderIcon.textContent = '📁 ';
-            
-            // Folder name
-            headerRow.createSpan({ text: folder.isRoot() ? 'Root' : folder.name, cls: 'folder-name' });
-            
-            // Container for subdirectory option (only shown when folder is selected)
-            const subdirOptionContainer = folderItem.createDiv({ cls: 'subdir-option' });
-            subdirOptionContainer.style.paddingLeft = ((level + 1) * 20) + 'px';
-            subdirOptionContainer.style.display = 'none';
-            subdirOptionContainer.style.marginTop = '4px';
-            subdirOptionContainer.style.marginBottom = '4px';
-            
-            const subdirCheckbox = subdirOptionContainer.createEl('input', {
-                type: 'checkbox',
-                cls: 'subdir-checkbox'
-            });
-            subdirCheckbox.checked = true; // Default to include subdirectories
-            subdirCheckbox.style.marginRight = '8px';
-            
-            subdirOptionContainer.createSpan({ text: 'Include subdirectories' });
-            
-            // Store subdirectory preference
-            this.folderSubdirectoryOptions.set(folder.path, true);
-            
-            // Subdirectory option change handler
-            subdirCheckbox.addEventListener('change', () => {
-                this.folderSubdirectoryOptions.set(folder.path, subdirCheckbox.checked);
-            });
-            
-            // Skip folder itself selection for root
-            if (!folder.isRoot()) {
-                // Handle folder selection
-                checkbox.addEventListener('change', () => {
-                    if (checkbox.checked) {
-                        // Add folder to selection if not already there
-                        if (!this.selectedFolders.find(f => f.path === folder.path)) {
-                            this.selectedFolders.push(folder);
-                            
-                            // Show subdirectory option
-                            subdirOptionContainer.style.display = 'block';
-                        }
-                    } else {
-                        // Remove folder from selection
-                        this.selectedFolders = this.selectedFolders.filter(f => f.path !== folder.path);
-                        
-                        // Hide subdirectory option
-                        subdirOptionContainer.style.display = 'none';
-                    }
-                    
-                    this.updateSelectionCount(selectionCountEl);
-                });
-            } else {
-                // Make root checkbox invisible
-                checkbox.style.visibility = 'hidden';
-            }
-            
-            // Children container - will hold files and subfolders
-            const childrenContainer = folderItem.createDiv({ cls: 'folder-children' });
-            
-            // Add files in this folder
-            const markdownFiles = folder.children.filter(child => 
-                child instanceof TFile && child.extension === 'md'
-            ).sort((a, b) => a.name.localeCompare(b.name));
-            
-            for (const file of markdownFiles) {
-                this.addFileToTree(childrenContainer, file as TFile, selectionCountEl, level + 1);
-            }
-            
-            // Add subfolders
-            const subfolders = folder.children.filter(child => 
-                child instanceof TFolder
-            ).sort((a, b) => a.name.localeCompare(b.name));
-            
-            for (const subfolder of subfolders) {
-                this.addFolderToTree(childrenContainer, subfolder as TFolder, selectionCountEl, level + 1);
-            }
-            
-            // Make folder expandable
-            headerRow.addEventListener('click', (e) => {
-                // Don't toggle if clicking directly on the checkbox
-                if (e.target !== checkbox) {
-                    const isExpanded = childrenContainer.style.display !== 'none';
-                    childrenContainer.style.display = isExpanded ? 'none' : 'block';
-                    folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
-                }
-            });
-            
-            // Expanded by default only for root
-            if (!folder.isRoot()) {
-                childrenContainer.style.display = 'none';
-            }
-        }
-    }
+		// Special handling for root folder - just add its children directly
+		if (folder.isRoot()) {
+			// Sort all children: folders before files, then alphabetically
+			const allChildren = [...folder.children];
+			allChildren.sort((a, b) => {
+				// First sort by type: folders before files
+				const aIsFolder = a instanceof TFolder;
+				const bIsFolder = b instanceof TFolder;
+				
+				if (aIsFolder !== bIsFolder) {
+					return aIsFolder ? -1 : 1;
+				}
+				
+				// If same type, sort alphabetically by name
+				return a.name.localeCompare(b.name);
+			});
+			
+			// Add all children directly to the parent element
+			for (const child of allChildren) {
+				if (child instanceof TFolder) {
+					// Don't add hidden folders
+					if (!child.path.startsWith('.')) {
+						// Add subfolder - use the same level since we're skipping root
+						this.addFolderToTree(parentEl, child, selectionCountEl, level);
+					}
+				} else if (child instanceof TFile && child.extension === 'md') {
+					// Add file - use the same level since we're skipping root
+					this.addFileToTree(parentEl, child, selectionCountEl, level);
+				}
+			}
+			return; // Exit early after processing root
+		}
+		
+		// Regular handling for non-root folders (no change from original code)
+		// Don't add hidden folders
+		if (!folder.path.startsWith('.')) {
+			// Create folder item
+			const folderItem = parentEl.createDiv({ cls: 'file-tree-item folder-item' });
+			
+			// Header row with checkbox
+			const headerRow = folderItem.createDiv({ cls: 'file-tree-header' });
+			headerRow.style.paddingLeft = (level * 20) + 'px';
+			
+			// Checkbox for folder selection
+			const checkbox = headerRow.createEl('input', {
+				type: 'checkbox',
+				cls: 'folder-checkbox'
+			});
+			checkbox.style.marginRight = '8px';
+			
+			// Set initial checked state based on selection
+			checkbox.checked = !!this.selectedFolders.find(f => f.path === folder.path);
+			
+			// Folder icon
+			const folderIcon = headerRow.createSpan({ cls: 'folder-icon' });
+			folderIcon.textContent = '📁 ';
+			
+			// Folder name
+			headerRow.createSpan({ text: folder.name, cls: 'folder-name' });
+			
+			// Always set to include subdirectories without showing the option
+			this.folderSubdirectoryOptions.set(folder.path, true);
+			
+			// Children container - will hold files and subfolders
+			const childrenContainer = folderItem.createDiv({ cls: 'folder-children' });
+			
+			// Sort all children first: folders before files, then alphabetically
+			const allChildren = [...folder.children];
+			allChildren.sort((a, b) => {
+				// First sort by type: folders before files
+				const aIsFolder = a instanceof TFolder;
+				const bIsFolder = b instanceof TFolder;
+				
+				if (aIsFolder !== bIsFolder) {
+					return aIsFolder ? -1 : 1;
+				}
+				
+				// If same type, sort alphabetically by name
+				return a.name.localeCompare(b.name);
+			});
+			
+			// Add all children in the sorted order
+			for (const child of allChildren) {
+				if (child instanceof TFolder) {
+					// Add subfolder
+					this.addFolderToTree(childrenContainer, child, selectionCountEl, level + 1);
+				} else if (child instanceof TFile && child.extension === 'md') {
+					// Add file
+					this.addFileToTree(childrenContainer, child, selectionCountEl, level + 1);
+				}
+			}
+			
+			// Handle folder selection
+			checkbox.addEventListener('change', () => {
+				if (checkbox.checked) {
+					// Add folder to selection if not already there
+					if (!this.selectedFolders.find(f => f.path === folder.path)) {
+						this.selectedFolders.push(folder);
+					}
+					
+					// Recursively check all child checkboxes to visually indicate selection
+					const childCheckboxes = childrenContainer.querySelectorAll('input[type="checkbox"]');
+					childCheckboxes.forEach((cb: HTMLInputElement) => {
+						if (!cb.checked) {
+							cb.checked = true;
+							
+							// Manually trigger change event for each checkbox
+							const changeEvent = new Event('change');
+							cb.dispatchEvent(changeEvent);
+						}
+					});
+				} else {
+					// Remove folder from selection
+					this.selectedFolders = this.selectedFolders.filter(f => f.path !== folder.path);
+					
+					// Recursively uncheck all child checkboxes
+					const childCheckboxes = childrenContainer.querySelectorAll('input[type="checkbox"]');
+					childCheckboxes.forEach((cb: HTMLInputElement) => {
+						if (cb.checked) {
+							cb.checked = false;
+							
+							// Manually trigger change event for each checkbox
+							const changeEvent = new Event('change');
+							cb.dispatchEvent(changeEvent);
+						}
+					});
+				}
+				
+				this.updateSelectionCount(selectionCountEl);
+			});
+			
+			// Make folder expandable
+			headerRow.addEventListener('click', (e) => {
+				// Don't toggle if clicking directly on the checkbox
+				if (e.target !== checkbox) {
+					const isExpanded = childrenContainer.style.display !== 'none';
+					childrenContainer.style.display = isExpanded ? 'none' : 'block';
+					folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
+				}
+			});
+			
+			// Collapsed by default
+			childrenContainer.style.display = 'none';
+		}
+	}
     
     addFileToTree(parentEl: HTMLElement, file: TFile, selectionCountEl: HTMLElement, level: number = 0) {
         // Create file item
@@ -3594,6 +3677,9 @@ class TemplateFileSelectorModal extends Modal {
             cls: 'file-checkbox'
         });
         checkbox.style.marginRight = '8px';
+        
+        // Set initial checked state based on selection
+        checkbox.checked = !!this.selectedFiles.find(f => f.path === file.path);
         
         // File icon
         const fileIcon = headerRow.createSpan({ cls: 'file-icon' });
@@ -3655,6 +3741,41 @@ class TemplateFileSelectorModal extends Modal {
         if (confirmButton) {
             confirmButton.disabled = totalCount === 0;
         }
+    }
+    
+    // Helper method to get all markdown files from a folder recursively
+    getMarkdownFilesInFolder(folder: TFolder): TFile[] {
+        const files: TFile[] = [];
+        
+        const processFolder = (f: TFolder) => {
+            for (const child of f.children) {
+                if (child instanceof TFile && child.extension === 'md') {
+                    files.push(child as TFile);
+                } else if (child instanceof TFolder) {
+                    processFolder(child as TFolder);
+                }
+            }
+        };
+        
+        processFolder(folder);
+        return files;
+    }
+    
+    // Helper method to get all subfolders from a folder recursively
+    getAllSubfolders(folder: TFolder): TFolder[] {
+        const subfolders: TFolder[] = [];
+        
+        const processFolder = (f: TFolder) => {
+            for (const child of f.children) {
+                if (child instanceof TFolder) {
+                    subfolders.push(child as TFolder);
+                    processFolder(child as TFolder);
+                }
+            }
+        };
+        
+        processFolder(folder);
+        return subfolders;
     }
     
     onClose() {

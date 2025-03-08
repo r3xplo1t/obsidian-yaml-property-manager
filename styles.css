@@ -1163,3 +1163,104 @@ button {
     font-weight: 500;
     padding: 6px 12px;
 }
+
+/* Improved template tree item styles */
+.template-tree-item {
+    margin-bottom: 2px;
+    transition: background-color 0.1s ease;
+}
+
+.template-tree-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 4px;
+    border-radius: 4px;
+}
+
+.template-tree-header.expandable:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.template-path-icon {
+    margin-right: 8px;
+}
+
+.template-path-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Improve child container display */
+.template-tree-children {
+    margin-left: 12px;
+    transition: all 0.2s ease;
+}
+
+/* Enhanced clickable folder headers */
+.template-tree-header.expandable {
+    cursor: pointer;
+}
+
+.template-tree-header.expandable:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* Make folder icons more visible */
+.template-path-icon {
+    min-width: 16px;
+    text-align: center;
+}
+
+/* Smoother transitions for expand/collapse */
+.template-tree-children {
+    margin-left: 12px;
+    transition: all 0.2s ease;
+}
+
+/* Template node styles - NEW implementation */
+.template-node {
+    margin-bottom: 2px;
+}
+
+.template-node-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+.template-node-header.is-folder {
+    cursor: pointer;
+}
+
+.template-node-header.is-folder:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.template-node-icon {
+    margin-right: 8px;
+    min-width: 16px;
+    text-align: center;
+}
+
+.template-node-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.template-node-remove {
+    margin-left: 8px;
+    opacity: 0.8;
+}
+
+.template-node-remove:hover {
+    opacity: 1;
+}
+
+.template-node-children {
+    margin-left: 16px;
+}
