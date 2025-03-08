@@ -1,11 +1,28 @@
 // main.ts
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder } from 'obsidian';
 
 interface YAMLPropertyManagerSettings {
-	defaultTemplateFilePath: string;
+	templatePaths: TemplatePath[]; // Replace defaultTemplateFilePath
 	recentTemplates: string[];
 	maxRecentTemplates: number;
 }
+
+// New interface for template paths
+interface TemplatePath {
+	type: 'file' | 'directory';
+	path: string;
+	includeSubdirectories: boolean; // Only relevant for directories
+}
+
+// Interface to represent the template hierarchy
+interface TemplateNode {
+    type: 'folder' | 'file';
+    name: string;
+    path: string;
+    children: TemplateNode[];
+    file?: TFile; // Only present for files
+}
+
 
 // Property types available in Obsidian
 const PROPERTY_TYPES = [
@@ -17,8 +34,8 @@ const PROPERTY_TYPES = [
     { value: 'datetime', label: 'Date & Time' }
 ];
 
-const DEFAULT_SETTINGS: YAMLPropertyManagerSettings = {
-	defaultTemplateFilePath: '',
+	const DEFAULT_SETTINGS: YAMLPropertyManagerSettings = {
+	templatePaths: [], // Replace defaultTemplateFilePath with empty array
 	recentTemplates: [],
 	maxRecentTemplates: 5
 }
@@ -80,7 +97,26 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const loadedData = await this.loadData();
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
+		
+		// Migrate from old format if needed
+		if (loadedData && 'defaultTemplateFilePath' in loadedData && 
+			loadedData.defaultTemplateFilePath && 
+			!('templatePaths' in loadedData)) {
+			
+			this.settings.templatePaths = [{
+				type: 'file',
+				path: loadedData.defaultTemplateFilePath,
+				includeSubdirectories: false
+			}];
+			
+			// Remove old property
+			delete (this.settings as any).defaultTemplateFilePath;
+			
+			// Save migrated settings
+			await this.saveSettings();
+		}
 	}
 
 	async saveSettings() {
@@ -102,6 +138,61 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
 		
 		this.saveSettings();
 	}
+
+	// Get all template files based on configuration
+	async getAllTemplateFiles(): Promise<TFile[]> {
+		const templates: TFile[] = [];
+		const processedPaths = new Set<string>(); // To avoid duplicates
+		
+		for (const templatePath of this.settings.templatePaths) {
+			if (templatePath.type === 'file') {
+				// Handle individual file
+				const file = this.app.vault.getAbstractFileByPath(templatePath.path);
+				if (file instanceof TFile && file.extension === 'md' && !processedPaths.has(file.path)) {
+					templates.push(file);
+					processedPaths.add(file.path);
+				}
+			} else {
+				// Handle directory
+				const folder = this.app.vault.getAbstractFileByPath(templatePath.path);
+				if (folder && folder instanceof TFolder) {
+					const filesInFolder = await this.getTemplateFilesFromFolder(
+						folder, 
+						templatePath.includeSubdirectories, // Fix indentation here
+						processedPaths
+					); // Fix closing parenthesis here
+					templates.push(...filesInFolder);
+				}
+		}
+	}
+	
+	return templates;
+}
+
+// Recursively get template files from a folder
+async getTemplateFilesFromFolder(
+	folder: TFolder, 
+	includeSubfolders: boolean, 
+	processedPaths: Set<string>
+): Promise<TFile[]> {
+	const templates: TFile[] = [];
+	
+	for (const child of folder.children) {
+		if (child instanceof TFile && child.extension === 'md' && !processedPaths.has(child.path)) {
+			templates.push(child);
+			processedPaths.add(child.path);
+		} else if (includeSubfolders && child instanceof TFolder) {
+			const subfolderTemplates = await this.getTemplateFilesFromFolder(
+				child, 
+				includeSubfolders,
+				processedPaths
+			);
+			templates.push(...subfolderTemplates);
+		}
+	}
+	
+	return templates;
+}
 
 	// Property utility functions
 	
@@ -664,360 +755,595 @@ class SingleFilePropertyModal extends Modal {
 	}
 }
 
-// Modal for selecting a template file
+// Updated Template Selection Modal
+
+// Enhanced template selection modal with simplified hierarchical browsing
 class TemplateSelectionModal extends Modal {
-	plugin: YAMLPropertyManagerPlugin;
-	targetFiles: TFile[];
-	selectedTemplate: TFile | null = null;
-	selectedProperties: string[] = [];
-	consistentProperties: string[] = [];
+    plugin: YAMLPropertyManagerPlugin;
+    targetFiles: TFile[];
+    selectedTemplate: TFile | null = null;
+    selectedProperties: string[] = [];
+    consistentProperties: string[] = [];
+    templateTree: TemplateNode = { type: 'folder', name: 'Root', path: '', children: [] };
 
-	constructor(app: App, plugin: YAMLPropertyManagerPlugin, targetFiles: TFile[]) {
-		super(app);
-		this.plugin = plugin;
-		this.targetFiles = targetFiles;
-	}
+    constructor(app: App, plugin: YAMLPropertyManagerPlugin, targetFiles: TFile[]) {
+        super(app);
+        this.plugin = plugin;
+        this.targetFiles = targetFiles;
+    }
 
-	async onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
-		contentEl.addClass('yaml-property-manager-modal');
-		contentEl.addClass('template-selection-modal');
-		
-		this.modalEl.style.width = '95%';
-		this.modalEl.style.maxWidth = '900px';
-		this.modalEl.style.maxHeight = '85vh';
-		this.modalEl.style.overflowY = 'auto';
-		
-		// Add header with back button
-		const headerContainer = contentEl.createDiv({ cls: 'modal-header' });
-		headerContainer.style.display = 'flex';
-		headerContainer.style.alignItems = 'center';
-		headerContainer.style.marginBottom = '15px';
-		
-		const backButton = headerContainer.createEl('button', { text: '← Back' });
-		backButton.style.marginRight = '10px';
-		backButton.addEventListener('click', () => {
-			// Open a new PropertyManagerModal
-			const mainModal = new PropertyManagerModal(this.app, this.plugin);
-			this.close();
-			mainModal.open();
-		});
-		
-		headerContainer.createEl('h2', { text: 'Select Template File' });
-		
-		// Template selection
-		const templateContainer = contentEl.createDiv({ cls: 'template-container' });
-		templateContainer.style.width = '100%';
-		templateContainer.style.boxSizing = 'border-box';
-		
-		// Default template option if set
-		if (this.plugin.settings.defaultTemplateFilePath) {
-			const defaultFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.defaultTemplateFilePath);
-			if (defaultFile instanceof TFile) {
-				const defaultOption = templateContainer.createDiv({ cls: 'template-option' });
-				
-				const radioBtn = defaultOption.createEl('input', {
-					type: 'radio',
-					attr: {
-						name: 'template',
-						value: defaultFile.path,
-						id: `template-${defaultFile.path}`
-					}
-				});
-				radioBtn.addEventListener('change', () => {
-					if (radioBtn.checked) {
-						this.selectedTemplate = defaultFile;
-						this.loadTemplateProperties();
-					}
-				});
-				
-				defaultOption.createEl('label', {
-					text: `Default: ${defaultFile.name}`,
-					attr: { for: `template-${defaultFile.path}` }
-				});
-			}
-		}
-		
-		// Recent templates
-		if (this.plugin.settings.recentTemplates.length > 0) {
-			templateContainer.createEl('h3', { text: 'Recent Templates' });
-			
-			for (const path of this.plugin.settings.recentTemplates) {
-				const file = this.app.vault.getAbstractFileByPath(path);
-				if (file instanceof TFile) {
-					const recentOption = templateContainer.createDiv({ cls: 'template-option' });
-					
-					const radioBtn = recentOption.createEl('input', {
-						type: 'radio',
-						attr: {
-							name: 'template',
-							value: file.path,
-							id: `template-${file.path}`
-						}
-					});
-					radioBtn.addEventListener('change', () => {
-						if (radioBtn.checked) {
-							this.selectedTemplate = file;
-							this.loadTemplateProperties();
-						}
-					});
-					
-					recentOption.createEl('label', {
-						text: file.name,
-						attr: { for: `template-${file.path}` }
-					});
-				}
-			}
-		}
-		
-		// Browse button
-		const browseButton = templateContainer.createEl('button', { text: 'Browse Files' });
-		browseButton.style.width = '100%';
-		browseButton.style.boxSizing = 'border-box';
-		browseButton.addEventListener('click', () => {
-			new FileSelectorModal(this.app, (file) => {
-				if (file) {
-					this.selectedTemplate = file;
-					this.loadTemplateProperties();
-				}
-			}).open();
-		});
-		
-		// Property selection container (initially empty, populated after template selection)
-		const propertyContainer = contentEl.createDiv({ cls: 'property-container' });
-		propertyContainer.style.width = '100%';
-		propertyContainer.style.boxSizing = 'border-box';
-		propertyContainer.createEl('p', { 
-			text: 'Select a template file to view and choose properties' 
-		});
-		
-		// Buttons - make sticky
-		const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
-		buttonContainer.style.position = 'sticky';
-		buttonContainer.style.bottom = '0';
-		buttonContainer.style.backgroundColor = 'var(--background-primary)';
-		buttonContainer.style.padding = '10px 0';
-		buttonContainer.style.zIndex = '10';
+    async onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('yaml-property-manager-modal');
+        contentEl.addClass('template-selection-modal');
+        
+        this.modalEl.style.width = '95%';
+        this.modalEl.style.maxWidth = '900px';
+        this.modalEl.style.maxHeight = '85vh';
+        this.modalEl.style.overflowY = 'auto';
+        
+        // Add header with back button
+        const headerContainer = contentEl.createDiv({ cls: 'modal-header' });
+        headerContainer.style.display = 'flex';
+        headerContainer.style.alignItems = 'center';
+        headerContainer.style.marginBottom = '15px';
+        
+        const backButton = headerContainer.createEl('button', { text: '← Back' });
+        backButton.style.marginRight = '10px';
+        backButton.addEventListener('click', () => {
+            // Open a new PropertyManagerModal
+            const mainModal = new PropertyManagerModal(this.app, this.plugin);
+            this.close();
+            mainModal.open();
+        });
+        
+        headerContainer.createEl('h2', { text: 'Select Template File' });
+        
+        // Loading templates indicator
+        const loadingEl = contentEl.createDiv({ cls: 'templates-loading' });
+        loadingEl.createEl('p', { text: 'Loading templates...' });
+        loadingEl.createEl('div', { cls: 'spinner' });
+        
+        // Load templates asynchronously
+        await this.buildTemplateTree();
+        
+        // Remove loading indicator
+        loadingEl.remove();
+        
+        // Template container
+        const templateContainer = contentEl.createDiv({ cls: 'template-container' });
+        templateContainer.style.width = '100%';
+        templateContainer.style.boxSizing = 'border-box';
+        
+        // If no templates found
+        if (this.templateTree.children.length === 0) {
+            templateContainer.createEl('p', { 
+                text: 'No template files found. Configure template files or directories in settings.',
+                cls: 'no-templates-message'
+            });
+        } else {
+            // Recent templates section
+            if (this.plugin.settings.recentTemplates.length > 0) {
+                templateContainer.createEl('h3', { text: 'Recent Templates' });
+                
+                const recentTemplatesContainer = templateContainer.createDiv({ cls: 'recent-templates' });
+                recentTemplatesContainer.style.marginBottom = '20px';
+                
+                // Create elements for recent templates
+                this.renderRecentTemplates(recentTemplatesContainer);
+            }
+            
+            // All templates section
+            templateContainer.createEl('h3', { text: 'All Templates' });
+            
+            // Create template tree browser
+            const templateTreeContainer = templateContainer.createDiv({ cls: 'template-tree-container' });
+            templateTreeContainer.style.maxHeight = '300px';
+            templateTreeContainer.style.overflow = 'auto';
+            templateTreeContainer.style.border = '1px solid var(--background-modifier-border)';
+            templateTreeContainer.style.borderRadius = '4px';
+            templateTreeContainer.style.padding = '8px';
+            
+            // Render the template tree
+            this.renderTemplateTree(templateTreeContainer, this.templateTree, true);
+        }
+        
+        // Property selection container (initially empty, populated after template selection)
+        const propertyContainer = contentEl.createDiv({ cls: 'property-container' });
+        propertyContainer.style.width = '100%';
+        propertyContainer.style.boxSizing = 'border-box';
+        propertyContainer.style.marginTop = '20px';
+        propertyContainer.createEl('p', { 
+            text: 'Select a template file to view and choose properties' 
+        });
+        
+        // Buttons - make sticky
+        const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+        buttonContainer.style.position = 'sticky';
+        buttonContainer.style.bottom = '0';
+        buttonContainer.style.backgroundColor = 'var(--background-primary)';
+        buttonContainer.style.padding = '10px 0';
+        buttonContainer.style.zIndex = '10';
 
-		const applyButton = buttonContainer.createEl('button', { 
-			text: 'Apply Template', 
-			cls: 'primary-button',
-			attr: { disabled: true }
-		});
-		applyButton.style.width = 'auto';
-		applyButton.style.boxSizing = 'border-box';
-		applyButton.addEventListener('click', async () => {
-			if (this.selectedTemplate && this.selectedProperties.length > 0) {
-				// Apply template
-				await this.plugin.applyTemplateToFiles(
-					this.selectedTemplate,
-					this.targetFiles,
-					this.selectedProperties,
-					this.consistentProperties
-				);
-				
-				// Add to recent templates
-				this.plugin.addToRecentTemplates(this.selectedTemplate.path);
-				
-				this.plugin.navigateToModal(this, 'main');
-			} else {
-				new Notice('Please select a template and at least one property');
-			}
-		});
-		
-		const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
-		cancelButton.style.width = 'auto';
-		cancelButton.style.boxSizing = 'border-box';
-		cancelButton.addEventListener('click', () => {
-			this.plugin.navigateToModal(this, 'main');
-		});
-	}
-	
-	async loadTemplateProperties() {
-		if (!this.selectedTemplate) return;
-		
-		const { contentEl } = this;
-		const propertyContainer = contentEl.querySelector('.property-container');
-		if (!propertyContainer) return;
-		
-		propertyContainer.empty();
-		
-		// Load properties from template
-		const properties = await this.plugin.parseFileProperties(this.selectedTemplate);
-		const propertyKeys = Object.keys(properties);
-		
-		if (propertyKeys.length === 0) {
-			propertyContainer.createEl('p', { 
-				text: 'The selected template file does not have any properties.' 
-			});
-			return;
-		}
-		
-		propertyContainer.createEl('h3', { text: 'Select Properties to Apply' });
-		
-		// Create toggle for "Select All"
-		const selectAllContainer = propertyContainer.createDiv({ cls: 'select-all-container' });
-		selectAllContainer.style.display = 'flex';
-		selectAllContainer.style.alignItems = 'center';
-		selectAllContainer.style.marginBottom = '10px';
-		selectAllContainer.style.width = '100%';
-		
-		const selectAllCheckbox = selectAllContainer.createEl('input', {
-			type: 'checkbox',
-			attr: { id: 'select-all-properties' }
-		});
-		selectAllContainer.createEl('label', {
-			text: 'Select All Properties',
-			attr: { for: 'select-all-properties' }
-		});
-		
-		selectAllCheckbox.addEventListener('change', () => {
-			const checked = selectAllCheckbox.checked;
-			const checkboxes = propertyContainer.querySelectorAll('.property-checkbox');
-			checkboxes.forEach((checkbox: HTMLInputElement) => {
-				checkbox.checked = checked;
-				const changeEvent = new Event('change');
-				checkbox.dispatchEvent(changeEvent);
-			});
-		});
-		
-		// Create property selection list with improved layout
-		const propertyList = propertyContainer.createDiv({ cls: 'property-list' });
-		propertyList.style.width = '100%';
-		propertyList.style.display = 'block';
-		
-		// Add header row with flex layout
-		const headerRow = propertyList.createEl('div', { cls: 'property-item header' });
-		headerRow.style.display = 'flex';
-		headerRow.style.width = '100%';
-		headerRow.style.flexWrap = 'nowrap';
-		headerRow.style.marginBottom = '10px';
-		
-		const includeHeader = headerRow.createEl('div', { text: 'Include', cls: 'property-include' });
-		includeHeader.style.width = '70px';
-		includeHeader.style.flexShrink = '0';
-		includeHeader.style.textAlign = 'center';
-		
-		const nameHeader = headerRow.createEl('div', { text: 'Property', cls: 'property-name' });
-		nameHeader.style.flex = '1';
-		nameHeader.style.minWidth = '120px';
-		
-		const valueHeader = headerRow.createEl('div', { text: 'Value', cls: 'property-value' });
-		valueHeader.style.flex = '2';
-		valueHeader.style.minWidth = '150px';
-		
-		const consistentHeader = headerRow.createEl('div', { text: 'Keep Consistent', cls: 'property-consistent' });
-		consistentHeader.style.width = '120px';
-		consistentHeader.style.flexShrink = '0';
-		consistentHeader.style.textAlign = 'center';
-		
-		for (const key of propertyKeys) {
-			const value = properties[key];
-			const propertyItem = propertyList.createEl('div', { cls: 'property-item' });
-			propertyItem.style.display = 'flex';
-			propertyItem.style.width = '100%';
-			propertyItem.style.flexWrap = 'nowrap';
-			propertyItem.style.alignItems = 'center';
-			propertyItem.style.marginBottom = '5px';
-			
-			// Include checkbox with fixed width
-			const includeContainer = propertyItem.createEl('div', { cls: 'property-include' });
-			includeContainer.style.width = '70px';
-			includeContainer.style.flexShrink = '0';
-			includeContainer.style.textAlign = 'center';
-			
-			const includeCheckbox = includeContainer.createEl('input', {
-				type: 'checkbox',
-				cls: 'property-checkbox',
-				attr: { id: `include-${key}` }
-			});
-			
-			// Property name with flex
-			const nameCell = propertyItem.createEl('div', { text: key, cls: 'property-name' });
-			nameCell.style.flex = '1';
-			nameCell.style.minWidth = '120px';
-			nameCell.style.overflow = 'hidden';
-			nameCell.style.textOverflow = 'ellipsis';
-			
-			// Property value with flex
-			const valueCell = propertyItem.createEl('div', { 
-				text: formatValuePreview(value), 
-				cls: 'property-value' 
-			});
-			valueCell.style.flex = '2';
-			valueCell.style.minWidth = '150px';
-			valueCell.style.overflow = 'hidden';
-			valueCell.style.textOverflow = 'ellipsis';
-			
-			// Consistent value checkbox with fixed width
-			const consistentContainer = propertyItem.createEl('div', { cls: 'property-consistent' });
-			consistentContainer.style.width = '120px';
-			consistentContainer.style.flexShrink = '0';
-			consistentContainer.style.textAlign = 'center';
-			
-			const consistentCheckbox = consistentContainer.createEl('input', {
-				type: 'checkbox',
-				cls: 'consistent-checkbox',
-				attr: { 
-					id: `consistent-${key}`,
-					disabled: !includeCheckbox.checked
-				}
-			});
-			consistentContainer.createEl('label', {
-				text: 'Keep Consistent',
-				attr: { for: `consistent-${key}` }
-			}).style.display = 'none'; // Hide label to save space, rely on header
-			
-			// Event handlers
-			includeCheckbox.addEventListener('change', () => {
-				if (includeCheckbox.checked) {
-					// Add to selected properties
-					if (!this.selectedProperties.includes(key)) {
-						this.selectedProperties.push(key);
-					}
-					// Enable consistent checkbox
-					consistentCheckbox.disabled = false;
-				} else {
-					// Remove from selected properties
-					this.selectedProperties = this.selectedProperties.filter(p => p !== key);
-					// Remove from consistent properties and disable checkbox
-					this.consistentProperties = this.consistentProperties.filter(p => p !== key);
-					consistentCheckbox.checked = false;
-					consistentCheckbox.disabled = true;
-				}
-				
-				// Update apply button state
-				const applyButton = this.contentEl.querySelector('.primary-button') as HTMLButtonElement;
-				if (applyButton) {
-					applyButton.disabled = this.selectedProperties.length === 0;
-				}
-			});
-			
-			consistentCheckbox.addEventListener('change', () => {
-				if (consistentCheckbox.checked) {
-					// Add to consistent properties
-					if (!this.consistentProperties.includes(key)) {
-						this.consistentProperties.push(key);
-					}
-				} else {
-					// Remove from consistent properties
-					this.consistentProperties = this.consistentProperties.filter(p => p !== key);
-				}
-			});
-		}
-		
-		// Enable apply button
-		const applyButton = this.contentEl.querySelector('.primary-button') as HTMLButtonElement;
-		if (applyButton) {
-			applyButton.disabled = false;
-		}
-	}
+        const applyButton = buttonContainer.createEl('button', { 
+            text: 'Apply Template', 
+            cls: 'primary-button',
+            attr: { disabled: true }
+        });
+        applyButton.style.width = 'auto';
+        applyButton.style.boxSizing = 'border-box';
+        applyButton.addEventListener('click', async () => {
+            if (this.selectedTemplate && this.selectedProperties.length > 0) {
+                // Apply template
+                await this.plugin.applyTemplateToFiles(
+                    this.selectedTemplate,
+                    this.targetFiles,
+                    this.selectedProperties,
+                    this.consistentProperties
+                );
+                
+                // Add to recent templates
+                this.plugin.addToRecentTemplates(this.selectedTemplate.path);
+                
+                this.plugin.navigateToModal(this, 'main');
+            } else {
+                new Notice('Please select a template and at least one property');
+            }
+        });
+        
+        const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
+        cancelButton.style.width = 'auto';
+        cancelButton.style.boxSizing = 'border-box';
+        cancelButton.addEventListener('click', () => {
+            this.plugin.navigateToModal(this, 'main');
+        });
+    }
+    
+    // Build the template tree hierarchy from the list of template files
+    async buildTemplateTree() {
+        // Reset the tree
+        this.templateTree = { type: 'folder', name: 'Root', path: '', children: [] };
+        
+        // Get all templates
+        const templates = await this.plugin.getAllTemplateFiles();
+        
+        // Add each template to the tree
+        for (const template of templates) {
+            this.addTemplateToTree(template);
+        }
+        
+        // Sort the tree recursively
+        this.sortTree(this.templateTree);
+    }
+    
+    // Add a template file to the tree structure
+    addTemplateToTree(template: TFile) {
+        // Get the path components
+        const pathParts = template.path.split('/');
+        const fileName = pathParts.pop() || '';
+        
+        // Start at the root node
+        let currentNode = this.templateTree;
+        let currentPath = '';
+        
+        // Build/traverse the folder structure
+        for (const folderName of pathParts) {
+            currentPath += folderName + '/';
+            
+            // Find if this folder already exists in the current node's children
+            let folderNode = currentNode.children.find(
+                child => child.type === 'folder' && child.name === folderName
+            );
+            
+            // If not, create it
+            if (!folderNode) {
+                folderNode = {
+                    type: 'folder',
+                    name: folderName,
+                    path: currentPath.slice(0, -1), // Remove trailing slash
+                    children: []
+                };
+                currentNode.children.push(folderNode);
+            }
+            
+            // Move down to this folder
+            currentNode = folderNode;
+        }
+        
+        // Add the file node to the current folder
+        currentNode.children.push({
+            type: 'file',
+            name: fileName,
+            path: template.path,
+            children: [],
+            file: template
+        });
+    }
+    
+    // Sort the tree recursively
+    sortTree(node: TemplateNode) {
+        // Sort children by type then name (folders first, then files)
+        node.children.sort((a, b) => {
+            if (a.type !== b.type) {
+                return a.type === 'folder' ? -1 : 1;
+            }
+            return a.name.localeCompare(b.name);
+        });
+        
+        // Recursively sort children
+        for (const child of node.children) {
+            if (child.type === 'folder') {
+                this.sortTree(child);
+            }
+        }
+    }
+    
+    // Render the template tree recursively
+    renderTemplateTree(container: HTMLElement, node: TemplateNode, expanded: boolean = false, level: number = 0) {
+        // For the root node, we only process its children
+        if (node.type === 'folder' && node.path === '') {
+            for (const child of node.children) {
+                this.renderTemplateTree(container, child, expanded, level);
+            }
+            return;
+        }
+        
+        // Create node element
+        const nodeEl = container.createDiv({ cls: `template-tree-item template-${node.type}` });
+        
+        // Create header (the clickable part with name)
+        const header = nodeEl.createDiv({ cls: 'template-tree-header' });
+        header.style.paddingLeft = (level * 20) + 'px';
+        
+        if (node.type === 'folder') {
+            // Folder icon
+            const folderIcon = header.createSpan({ cls: 'folder-icon' });
+            folderIcon.textContent = expanded ? '📂 ' : '📁 ';
+            
+            // Folder name
+            header.createSpan({ text: node.name, cls: 'folder-name' });
+            
+            // Container for children
+            const childrenContainer = nodeEl.createDiv({ cls: 'template-tree-children' });
+            childrenContainer.style.display = expanded ? 'block' : 'none';
+            
+            // Add children
+            for (const child of node.children) {
+                this.renderTemplateTree(childrenContainer, child, false, level + 1);
+            }
+            
+            // Toggle expansion when clicking the folder
+            header.addEventListener('click', () => {
+                const isExpanded = childrenContainer.style.display !== 'none';
+                childrenContainer.style.display = isExpanded ? 'none' : 'block';
+                folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
+            });
+        } else {
+            // For files, add radio button for selection
+            const radioContainer = header.createDiv({ cls: 'template-radio-container' });
+            radioContainer.style.marginRight = '5px';
+            
+            const radio = radioContainer.createEl('input', {
+                type: 'radio',
+                attr: {
+                    name: 'template',
+                    value: node.path,
+                    id: `template-${node.path}`
+                }
+            });
+            
+            // File icon
+            const fileIcon = header.createSpan({ cls: 'file-icon' });
+            fileIcon.textContent = '📄 ';
+            
+            // File name as label
+            const label = header.createEl('label', {
+                text: node.name,
+                attr: { for: `template-${node.path}` }
+            });
+            label.classList.add('file-name');
+            
+            // Selection logic
+            radio.addEventListener('change', () => {
+                if (radio.checked && node.file) {
+                    this.selectedTemplate = node.file;
+                    this.loadTemplateProperties();
+                }
+            });
+            
+            // Make the whole header clickable to select the template
+            header.addEventListener('click', (e) => {
+                // Don't handle if clicking directly on the radio button
+                if (e.target !== radio) {
+                    radio.checked = true;
+                    if (node.file) {
+                        this.selectedTemplate = node.file;
+                        this.loadTemplateProperties();
+                    }
+                }
+            });
+        }
+    }
+    
+    // Render recent templates section
+    renderRecentTemplates(container: HTMLElement) {
+        // Filter to only include templates that still exist
+        const existingRecentTemplates: TFile[] = [];
+        
+        for (const path of this.plugin.settings.recentTemplates) {
+            const file = this.app.vault.getAbstractFileByPath(path);
+            if (file instanceof TFile) {
+                existingRecentTemplates.push(file);
+            }
+        }
+        
+        if (existingRecentTemplates.length === 0) {
+            container.createEl('p', { text: 'No recent templates found' });
+            return;
+        }
+        
+        // Create element for each recent template
+        for (const file of existingRecentTemplates) {
+            const recentOption = container.createDiv({ cls: 'template-option' });
+            recentOption.style.display = 'flex';
+            recentOption.style.alignItems = 'center';
+            recentOption.style.marginBottom = '5px';
+            recentOption.style.padding = '5px';
+            recentOption.style.borderRadius = '4px';
+            recentOption.style.cursor = 'pointer';
+            recentOption.style.transition = 'background-color 0.1s ease';
+            
+            // Add hover effect
+            recentOption.addEventListener('mouseenter', () => {
+                recentOption.style.backgroundColor = 'var(--background-modifier-hover)';
+            });
+            
+            recentOption.addEventListener('mouseleave', () => {
+                recentOption.style.backgroundColor = '';
+            });
+            
+            const radioBtn = recentOption.createEl('input', {
+                type: 'radio',
+                attr: {
+                    name: 'template',
+                    value: file.path,
+                    id: `recent-template-${file.path}`
+                }
+            });
+            radioBtn.style.marginRight = '8px';
+            
+            // File icon
+            const fileIcon = recentOption.createSpan({ cls: 'file-icon' });
+            fileIcon.textContent = '📄 ';
+            fileIcon.style.marginRight = '5px';
+            
+            // Get relative path for display
+            let displayPath = file.path;
+            if (file.parent && file.parent.path) {
+                displayPath = file.parent.path + '/' + file.name;
+            }
+            
+            recentOption.createEl('label', {
+                text: displayPath,
+                attr: { for: `recent-template-${file.path}` }
+            });
+            
+            // Handle selection
+            radioBtn.addEventListener('change', () => {
+                if (radioBtn.checked) {
+                    this.selectedTemplate = file;
+                    this.loadTemplateProperties();
+                }
+            });
+            
+            // Make whole option clickable
+            recentOption.addEventListener('click', (e) => {
+                if (e.target !== radioBtn) {
+                    radioBtn.checked = true;
+                    this.selectedTemplate = file;
+                    this.loadTemplateProperties();
+                }
+            });
+        }
+    }
+    
+    // Load and display properties from the selected template
+    async loadTemplateProperties() {
+        if (!this.selectedTemplate) return;
+        
+        const { contentEl } = this;
+        const propertyContainer = contentEl.querySelector('.property-container');
+        if (!propertyContainer) return;
+        
+        propertyContainer.empty();
+        
+        // Load properties from template
+        const properties = await this.plugin.parseFileProperties(this.selectedTemplate);
+        const propertyKeys = Object.keys(properties);
+        
+        if (propertyKeys.length === 0) {
+            propertyContainer.createEl('p', { 
+                text: 'The selected template file does not have any properties.' 
+            });
+            return;
+        }
+        
+        // Display the selected template
+        const selectedTemplateInfo = propertyContainer.createDiv({ cls: 'selected-template-info' });
+        selectedTemplateInfo.style.marginBottom = '15px';
+        selectedTemplateInfo.style.padding = '8px';
+        selectedTemplateInfo.style.backgroundColor = 'var(--background-secondary)';
+        selectedTemplateInfo.style.borderRadius = '4px';
+        
+        selectedTemplateInfo.createEl('span', { 
+            text: `Selected Template: ${this.selectedTemplate.path}`
+        });
+        
+        propertyContainer.createEl('h3', { text: 'Select Properties to Apply' });
+        
+        // Create toggle for "Select All"
+        const selectAllContainer = propertyContainer.createDiv({ cls: 'select-all-container' });
+        selectAllContainer.style.display = 'flex';
+        selectAllContainer.style.alignItems = 'center';
+        selectAllContainer.style.marginBottom = '10px';
+        selectAllContainer.style.width = '100%';
+        
+        const selectAllCheckbox = selectAllContainer.createEl('input', {
+            type: 'checkbox',
+            attr: { id: 'select-all-properties' }
+        });
+        selectAllContainer.createEl('label', {
+            text: 'Select All Properties',
+            attr: { for: 'select-all-properties' }
+        });
+        
+        selectAllCheckbox.addEventListener('change', () => {
+            const checked = selectAllCheckbox.checked;
+            const checkboxes = propertyContainer.querySelectorAll('.property-checkbox');
+            checkboxes.forEach((checkbox: HTMLInputElement) => {
+                checkbox.checked = checked;
+                const changeEvent = new Event('change');
+                checkbox.dispatchEvent(changeEvent);
+            });
+        });
+        
+        // Create property selection list with improved layout
+        const propertyList = propertyContainer.createDiv({ cls: 'property-list' });
+        propertyList.style.width = '100%';
+        propertyList.style.display = 'block';
+        
+        // Add header row with flex layout
+        const headerRow = propertyList.createEl('div', { cls: 'property-item header' });
+        headerRow.style.display = 'flex';
+        headerRow.style.width = '100%';
+        headerRow.style.flexWrap = 'nowrap';
+        headerRow.style.marginBottom = '10px';
+        
+        const includeHeader = headerRow.createEl('div', { text: 'Include', cls: 'property-include' });
+        includeHeader.style.width = '70px';
+        includeHeader.style.flexShrink = '0';
+        includeHeader.style.textAlign = 'center';
+        
+        const nameHeader = headerRow.createEl('div', { text: 'Property', cls: 'property-name' });
+        nameHeader.style.flex = '1';
+        nameHeader.style.minWidth = '120px';
+        
+        const valueHeader = headerRow.createEl('div', { text: 'Value', cls: 'property-value' });
+        valueHeader.style.flex = '2';
+        valueHeader.style.minWidth = '150px';
+        
+        const consistentHeader = headerRow.createEl('div', { text: 'Keep Consistent', cls: 'property-consistent' });
+        consistentHeader.style.width = '120px';
+        consistentHeader.style.flexShrink = '0';
+        consistentHeader.style.textAlign = 'center';
+        
+        for (const key of propertyKeys) {
+            const value = properties[key];
+            const propertyItem = propertyList.createEl('div', { cls: 'property-item' });
+            propertyItem.style.display = 'flex';
+            propertyItem.style.width = '100%';
+            propertyItem.style.flexWrap = 'nowrap';
+            propertyItem.style.alignItems = 'center';
+            propertyItem.style.marginBottom = '5px';
+            
+            // Include checkbox with fixed width
+            const includeContainer = propertyItem.createEl('div', { cls: 'property-include' });
+            includeContainer.style.width = '70px';
+            includeContainer.style.flexShrink = '0';
+            includeContainer.style.textAlign = 'center';
+            
+            const includeCheckbox = includeContainer.createEl('input', {
+                type: 'checkbox',
+                cls: 'property-checkbox',
+                attr: { id: `include-${key}` }
+            });
+            
+            // Property name with flex
+            const nameCell = propertyItem.createEl('div', { text: key, cls: 'property-name' });
+            nameCell.style.flex = '1';
+            nameCell.style.minWidth = '120px';
+            nameCell.style.overflow = 'hidden';
+            nameCell.style.textOverflow = 'ellipsis';
+            
+            // Property value with flex
+            const valueCell = propertyItem.createEl('div', { 
+                text: formatValuePreview(value), 
+                cls: 'property-value' 
+            });
+            valueCell.style.flex = '2';
+            valueCell.style.minWidth = '150px';
+            valueCell.style.overflow = 'hidden';
+            valueCell.style.textOverflow = 'ellipsis';
+            
+            // Consistent value checkbox with fixed width
+            const consistentContainer = propertyItem.createEl('div', { cls: 'property-consistent' });
+            consistentContainer.style.width = '120px';
+            consistentContainer.style.flexShrink = '0';
+            consistentContainer.style.textAlign = 'center';
+            
+            const consistentCheckbox = consistentContainer.createEl('input', {
+                type: 'checkbox',
+                cls: 'consistent-checkbox',
+                attr: { 
+                    id: `consistent-${key}`,
+                    disabled: !includeCheckbox.checked
+                }
+            });
+            consistentContainer.createEl('label', {
+                text: 'Keep Consistent',
+                attr: { for: `consistent-${key}` }
+            }).style.display = 'none'; // Hide label to save space, rely on header
+            
+            // Event handlers
+            includeCheckbox.addEventListener('change', () => {
+                if (includeCheckbox.checked) {
+                    // Add to selected properties
+                    if (!this.selectedProperties.includes(key)) {
+                        this.selectedProperties.push(key);
+                    }
+                    // Enable consistent checkbox
+                    consistentCheckbox.disabled = false;
+                } else {
+                    // Remove from selected properties
+                    this.selectedProperties = this.selectedProperties.filter(p => p !== key);
+                    // Remove from consistent properties and disable checkbox
+                    this.consistentProperties = this.consistentProperties.filter(p => p !== key);
+                    consistentCheckbox.checked = false;
+                    consistentCheckbox.disabled = true;
+                }
+                
+                // Update apply button state
+                const applyButton = this.contentEl.querySelector('.primary-button') as HTMLButtonElement;
+                if (applyButton) {
+                    applyButton.disabled = this.selectedProperties.length === 0;
+                }
+            });
+            
+            consistentCheckbox.addEventListener('change', () => {
+                if (consistentCheckbox.checked) {
+                    // Add to consistent properties
+                    if (!this.consistentProperties.includes(key)) {
+                        this.consistentProperties.push(key);
+                    }
+                } else {
+                    // Remove from consistent properties
+                    this.consistentProperties = this.consistentProperties.filter(p => p !== key);
+                }
+            });
+        }
+        
+        // Enable apply button
+        const applyButton = this.contentEl.querySelector('.primary-button') as HTMLButtonElement;
+        if (applyButton) {
+            applyButton.disabled = false;
+        }
+    }
 
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
 }
 
 // Helper for file selection
@@ -2637,7 +2963,7 @@ function formatValuePreview(value: any): string {
 	return String(value);
 }
 
-// Settings tab
+// Settings tab with hierarchical template display - fixed type casting
 class YAMLPropertyManagerSettingTab extends PluginSettingTab {
 	plugin: YAMLPropertyManagerPlugin;
 
@@ -2652,28 +2978,85 @@ class YAMLPropertyManagerSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', { text: 'YAML Property Manager Settings' });
 
-		// Default template file setting
-		new Setting(containerEl)
-			.setName('Default Template File')
-			.setDesc('Select a default template file to use for applying properties')
-			.addText(text => text
-				.setPlaceholder('Path to template file')
-				.setValue(this.plugin.settings.defaultTemplateFilePath)
-				.onChange(async (value) => {
-					this.plugin.settings.defaultTemplateFilePath = value;
+		// Template Paths Section
+		containerEl.createEl('h3', { text: 'Template Paths' });
+		
+		const templatePathsContainer = containerEl.createDiv('template-paths-container');
+		templatePathsContainer.style.marginBottom = '20px';
+		templatePathsContainer.style.border = '1px solid var(--background-modifier-border)';
+		templatePathsContainer.style.borderRadius = '4px';
+		templatePathsContainer.style.padding = '10px';
+		templatePathsContainer.style.maxHeight = '300px';
+		templatePathsContainer.style.overflowY = 'auto';
+		
+		// Display existing template paths in a hierarchical structure
+		if (this.plugin.settings.templatePaths.length === 0) {
+			templatePathsContainer.createEl('p', {
+				text: 'No template paths configured. Add template files or directories below.',
+				cls: 'setting-item-description'
+			});
+		} else {
+			// Generate a tree structure of the templates
+			this.renderTemplatePathsHierarchy(templatePathsContainer);
+		}
+		
+		// Single button to add templates
+		const addTemplatesButton = containerEl.createEl('button', { 
+			text: 'Browse and Select Templates',
+			cls: 'mod-cta'
+		});
+		addTemplatesButton.style.marginBottom = '20px';
+		addTemplatesButton.style.marginTop = '10px';
+		
+		addTemplatesButton.addEventListener('click', () => {
+			new TemplateFileSelectorModal(this.app, async (result) => {
+				// Process selected files and folders
+				let countAdded = 0;
+				
+				// Add individual files
+				for (const file of result.files) {
+					// Check if already exists
+					const alreadyExists = this.plugin.settings.templatePaths.some(
+						tp => tp.type === 'file' && tp.path === file.path
+					);
+					
+					if (!alreadyExists) {
+						this.plugin.settings.templatePaths.push({
+							type: 'file',
+							path: file.path,
+							includeSubdirectories: true // Always include subdirectories
+						});
+						countAdded++;
+					}
+				}
+				
+				// Add folders
+				for (const folder of result.folders) {
+					// Check if already exists
+					const alreadyExists = this.plugin.settings.templatePaths.some(
+						tp => tp.type === 'directory' && tp.path === folder.path
+					);
+					
+					if (!alreadyExists) {
+						this.plugin.settings.templatePaths.push({
+							type: 'directory',
+							path: folder.path,
+							includeSubdirectories: true // Always include subdirectories
+						});
+						countAdded++;
+					}
+				}
+				
+				// Save settings and refresh
+				if (countAdded > 0) {
 					await this.plugin.saveSettings();
-				}))
-			.addButton(button => button
-				.setButtonText('Browse')
-				.onClick(() => {
-					new FileSelectorModal(this.app, (file) => {
-						if (file) {
-							this.plugin.settings.defaultTemplateFilePath = file.path;
-							this.plugin.saveSettings();
-							this.display(); // Refresh settings
-						}
-					}).open();
-				}));
+					new Notice(`Added ${countAdded} template source${countAdded !== 1 ? 's' : ''}`);
+					this.display(); // Refresh view
+				} else if (result.files.length > 0 || result.folders.length > 0) {
+					new Notice('All selected templates were already in your list');
+				}
+			}).open();
+		});
 		
 		// Max recent templates
 		new Setting(containerEl)
@@ -2704,14 +3087,578 @@ class YAMLPropertyManagerSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					new Notice('Recent templates cleared');
 				}));
-
-		// CSS styles for the plugin
-		containerEl.createEl('h3', { text: 'Styling' });
-		
-		// Add CSS to the plugin
-		const customCSSContainer = containerEl.createDiv();
-		customCSSContainer.createEl('p', { 
-			text: 'The plugin includes custom CSS for a better user experience.' 
-		});
 	}
+	
+	// Render template paths as a hierarchy
+	renderTemplatePathsHierarchy(container: HTMLElement) {
+		// First, build a hierarchical tree structure
+		interface TreeNode {
+			name: string;
+			path: string;
+			isDirectory: boolean;
+			children: TreeNode[];
+			templatePathIndex?: number; // Reference to the original index in settings
+		}
+		
+		const rootNode: TreeNode = {
+			name: this.app.vault.getName(),
+			path: '',
+			isDirectory: true,
+			children: []
+		};
+		
+		// Helper to find or create a node for a path
+		const getNodeForPath = (path: string, isDirectory: boolean): TreeNode => {
+			if (path === '') return rootNode;
+			
+			const parts = path.split('/');
+			let currentNode = rootNode;
+			let currentPath = '';
+			
+			// Navigate/create the tree structure
+			for (let i = 0; i < parts.length; i++) {
+				const part = parts[i];
+				currentPath = currentPath ? `${currentPath}/${part}` : part;
+				const isLastPart = i === parts.length - 1;
+				
+				// Look for existing node
+				let found = currentNode.children.find(c => c.name === part);
+				
+				if (!found) {
+					// Create a new node
+					const newNode: TreeNode = {
+						name: part,
+						path: currentPath,
+						isDirectory: isLastPart ? isDirectory : true, // Intermediate nodes are always directories
+						children: []
+					};
+					
+					currentNode.children.push(newNode);
+					found = newNode;
+				}
+				
+				currentNode = found;
+			}
+			
+			return currentNode;
+		};
+		
+		// Add all template paths to the tree
+		this.plugin.settings.templatePaths.forEach((tp, index) => {
+			const node = getNodeForPath(tp.path, tp.type === 'directory');
+			node.templatePathIndex = index; // Store reference to original index
+		});
+		
+		// Sort helper for tree nodes
+		const sortTreeNodes = (nodes: TreeNode[]) => {
+			// Sort by type first (directories before files), then by name
+			nodes.sort((a, b) => {
+				if (a.isDirectory !== b.isDirectory) {
+					return a.isDirectory ? -1 : 1;
+				}
+				return a.name.localeCompare(b.name);
+			});
+			
+			// Recursively sort children
+			for (const node of nodes) {
+				if (node.children.length > 0) {
+					sortTreeNodes(node.children);
+				}
+			}
+		};
+		
+		// Sort the tree
+		sortTreeNodes(rootNode.children);
+		
+		// Render the tree structure
+		const renderTree = (node: TreeNode, container: HTMLElement, level: number = 0) => {
+			if (node !== rootNode) {
+				const itemEl = container.createDiv({ cls: 'template-tree-item' });
+				
+				// Container for icon, name, and remove button
+				const itemHeader = itemEl.createDiv({ cls: 'template-tree-header' });
+				itemHeader.style.paddingLeft = `${level * 20}px`;
+				
+				// Icon
+				const icon = itemHeader.createSpan({ cls: 'template-path-icon' });
+				icon.textContent = node.isDirectory ? '📁 ' : '📄 ';
+				
+				// Path name
+				const nameEl = itemHeader.createSpan({ 
+					text: node.name,
+					cls: 'template-path-name'
+				});
+				nameEl.style.flex = '1';
+				
+				// Remove button (only if it's an actual template path, not just a path in the hierarchy)
+				if (node.templatePathIndex !== undefined) {
+					const removeButton = itemHeader.createEl('button', { text: 'Remove' });
+					removeButton.style.marginLeft = '8px';
+					
+					removeButton.addEventListener('click', async (e) => {
+						e.stopPropagation();
+						
+						// Remove this template path
+						this.plugin.settings.templatePaths.splice(node.templatePathIndex, 1);
+						await this.plugin.saveSettings();
+						this.display(); // Refresh view
+					});
+				}
+			}
+			
+			// Render children
+			if (node.children.length > 0) {
+				const childrenContainer = container.createDiv({ cls: 'template-tree-children' });
+				childrenContainer.style.display = node === rootNode ? 'block' : 'none';
+				
+				for (const child of node.children) {
+					renderTree(child, childrenContainer, level + 1);
+				}
+				
+				// Make folders expandable
+				if (node !== rootNode && node.isDirectory) {
+					const header = container.querySelector('.template-tree-header:last-of-type');
+					if (header) {
+						header.addEventListener('click', (e) => {
+							if (e.target instanceof HTMLButtonElement) return; // Don't toggle if clicking the remove button
+							
+							const folderIcon = header.querySelector('.template-path-icon');
+							const childrenDiv = header.parentElement?.querySelector('.template-tree-children');
+							
+							if (childrenDiv) {
+								// Cast to HTMLElement to access style property
+								const childrenDivHtml = childrenDiv as HTMLElement;
+								const isExpanded = childrenDivHtml.style.display !== 'none';
+								childrenDivHtml.style.display = isExpanded ? 'none' : 'block';
+								
+								if (folderIcon) {
+									folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
+								}
+							}
+						});
+					}
+				}
+			}
+		};
+		
+		// Render the entire tree
+		renderTree(rootNode, container);
+	}
+}
+
+// Improved Folder selector modal with nested directories
+// Simplified Folder selector modal with nested directories
+class FolderSelectorModal extends Modal {
+    onSelect: (folder: TFolder | null) => void;
+    
+    constructor(app: App, onSelect: (folder: TFolder | null) => void) {
+        super(app);
+        this.onSelect = onSelect;
+    }
+    
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('folder-selector-modal');
+        
+        // Ensure modal has scrolling when needed
+        this.modalEl.style.maxHeight = '85vh';
+        this.modalEl.style.overflow = 'auto';
+        
+        contentEl.createEl('h2', { text: 'Select a Template Directory' });
+        
+        // Create folder tree with fixed height and scrolling
+        const folderTree = contentEl.createDiv({ cls: 'folder-tree-container' });
+        folderTree.style.maxHeight = '400px';
+        folderTree.style.overflowY = 'auto';
+        
+        // Add root folder and its children
+        const rootFolder = this.app.vault.getRoot();
+        this.addFolder(folderTree, rootFolder, true); // Expand root by default
+        
+        // Buttons - make sure they're outside scrollable area
+        const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+        buttonContainer.style.position = 'sticky';
+        buttonContainer.style.bottom = '0';
+        buttonContainer.style.backgroundColor = 'var(--background-primary)';
+        buttonContainer.style.padding = '10px 0';
+        buttonContainer.style.zIndex = '10';
+        
+        const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
+        cancelButton.addEventListener('click', () => {
+            this.onSelect(null);
+            this.close();
+        });
+    }
+    
+    addFolder(parentEl: HTMLElement, folder: TFolder, expanded: boolean = false) {
+        // Don't add hidden folders
+        if (folder.isRoot() || !folder.path.startsWith('.')) {
+            // Create folder item
+            const folderItem = parentEl.createDiv({ cls: 'folder-tree-item' });
+            
+            // Create folder header (the clickable part with the folder name)
+            const folderHeader = folderItem.createDiv({ cls: 'folder-tree-header' });
+            
+            // Add appropriate indentation based on nesting level
+            const nestingLevel = folder.path.split('/').length - (folder.isRoot() ? 1 : 0);
+            folderHeader.style.paddingLeft = (nestingLevel * 20) + 'px';
+            
+            // Folder icon - use as the toggle element
+            const folderIcon = folderHeader.createSpan({ cls: 'folder-icon' });
+            folderIcon.textContent = expanded ? '📂 ' : '📁 ';
+            
+            // Folder name
+            const folderName = folderHeader.createSpan({ cls: 'folder-name' });
+            folderName.textContent = folder.isRoot() ? 'Root' : folder.name;
+            
+            // Check if folder has subfolders
+            const hasSubfolders = folder.children.some(child => child instanceof TFolder);
+            
+            // Create container for child folders
+            const childContainer = folderItem.createDiv({ cls: 'folder-children' });
+            childContainer.style.display = expanded ? 'block' : 'none';
+            
+            // Add child folders
+            const childFolders = folder.children
+                .filter(child => child instanceof TFolder)
+                .sort((a, b) => a.name.localeCompare(b.name));
+            
+            for (const childFolder of childFolders) {
+                this.addFolder(childContainer, childFolder as TFolder);
+            }
+            
+            // Make folder selectable (except for root)
+            if (!folder.isRoot()) {
+                folderHeader.addEventListener('click', (e) => {
+                    // Double-click to select a folder
+                    if (e.detail === 2) {
+                        this.onSelect(folder);
+                        this.close();
+                        return;
+                    }
+                    
+                    // Single click toggles expansion if there are subfolders
+                    if (hasSubfolders) {
+                        const isExpanded = childContainer.style.display !== 'none';
+                        childContainer.style.display = isExpanded ? 'none' : 'block';
+                        folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
+                    }
+                });
+                
+                // Add selectability class for styling
+                folderHeader.addClass('selectable');
+            } else {
+                // Root folder just toggles expansion
+                folderHeader.addEventListener('click', () => {
+                    if (hasSubfolders) {
+                        const isExpanded = childContainer.style.display !== 'none';
+                        childContainer.style.display = isExpanded ? 'none' : 'block';
+                        folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
+                    }
+                });
+            }
+            
+            // If no subfolders and we're showing this expanded, hide the children container
+            if (!hasSubfolders && expanded) {
+                childContainer.style.display = 'none';
+            }
+        }
+    }
+    
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
+}
+
+// Modal for selecting multiple template files and/or directories
+class TemplateFileSelectorModal extends Modal {
+    onSelect: (result: { 
+        files: TFile[], 
+        folders: TFolder[], 
+        folderSettings: Map<string, boolean> 
+    }) => void;
+    selectedFiles: TFile[] = [];
+    selectedFolders: TFolder[] = [];
+    folderSubdirectoryOptions: Map<string, boolean> = new Map();
+    
+    constructor(app: App, onSelect: (result: { 
+        files: TFile[], 
+        folders: TFolder[], 
+        folderSettings: Map<string, boolean> 
+    }) => void) {
+        super(app);
+        this.onSelect = onSelect;
+    }
+    
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('template-file-selector-modal');
+        
+        // Ensure modal has appropriate dimensions
+        this.modalEl.style.width = '95%';
+        this.modalEl.style.maxWidth = '900px';
+        this.modalEl.style.maxHeight = '85vh';
+        this.modalEl.style.overflowY = 'auto';
+        
+        // Add header with title
+        const headerContainer = contentEl.createDiv({ cls: 'modal-header' });
+        headerContainer.style.display = 'flex';
+        headerContainer.style.alignItems = 'center';
+        headerContainer.style.marginBottom = '15px';
+        
+        headerContainer.createEl('h2', { text: 'Select Template Files and Directories' });
+        
+        // Instructions
+        contentEl.createEl('p', { 
+            text: 'Select files to use as templates, or select entire directories. Check the box to include a file or folder.'
+        });
+        
+        // File tree container
+        const fileTreeContainer = contentEl.createDiv({ cls: 'file-tree-container' });
+        fileTreeContainer.style.maxHeight = '400px';
+        fileTreeContainer.style.overflowY = 'auto';
+        
+        // Selection counter
+        const selectionCountEl = contentEl.createDiv({ cls: 'selection-count' });
+        selectionCountEl.textContent = 'Nothing selected';
+        
+        // File tree
+        const fileTree = fileTreeContainer.createDiv({ cls: 'file-tree' });
+        
+        // Add root folder
+        this.addFolderToTree(fileTree, this.app.vault.getRoot(), selectionCountEl);
+        
+        // Buttons
+        const buttonContainer = contentEl.createDiv({ cls: 'button-container' });
+        buttonContainer.style.position = 'sticky';
+        buttonContainer.style.bottom = '0';
+        buttonContainer.style.backgroundColor = 'var(--background-primary)';
+        buttonContainer.style.padding = '10px 0';
+        buttonContainer.style.zIndex = '10';
+        
+        const confirmButton = buttonContainer.createEl('button', {
+            text: 'Add Selected Files & Folders',
+            cls: 'primary-button',
+            attr: { disabled: true }
+        });
+        confirmButton.addEventListener('click', () => {
+            // Pass along the selected files, folders, and the subdirectory options map
+            const result = {
+                files: this.selectedFiles,
+                folders: this.selectedFolders,
+                folderSettings: this.folderSubdirectoryOptions
+            };
+            
+            this.onSelect(result);
+            this.close();
+        });
+        
+        const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
+        cancelButton.addEventListener('click', () => {
+            this.onSelect({ 
+                files: [], 
+                folders: [], 
+                folderSettings: new Map() 
+            });
+            this.close();
+        });
+    }
+    
+    addFolderToTree(parentEl: HTMLElement, folder: TFolder, selectionCountEl: HTMLElement, level: number = 0) {
+        // Don't add hidden folders
+        if (folder.isRoot() || !folder.path.startsWith('.')) {
+            // Create folder item
+            const folderItem = parentEl.createDiv({ cls: 'file-tree-item folder-item' });
+            
+            // Header row with checkbox
+            const headerRow = folderItem.createDiv({ cls: 'file-tree-header' });
+            headerRow.style.paddingLeft = (level * 20) + 'px';
+            
+            // Checkbox for folder selection
+            const checkbox = headerRow.createEl('input', {
+                type: 'checkbox',
+                cls: 'folder-checkbox'
+            });
+            checkbox.style.marginRight = '8px';
+            
+            // Folder icon
+            const folderIcon = headerRow.createSpan({ cls: 'folder-icon' });
+            folderIcon.textContent = '📁 ';
+            
+            // Folder name
+            headerRow.createSpan({ text: folder.isRoot() ? 'Root' : folder.name, cls: 'folder-name' });
+            
+            // Container for subdirectory option (only shown when folder is selected)
+            const subdirOptionContainer = folderItem.createDiv({ cls: 'subdir-option' });
+            subdirOptionContainer.style.paddingLeft = ((level + 1) * 20) + 'px';
+            subdirOptionContainer.style.display = 'none';
+            subdirOptionContainer.style.marginTop = '4px';
+            subdirOptionContainer.style.marginBottom = '4px';
+            
+            const subdirCheckbox = subdirOptionContainer.createEl('input', {
+                type: 'checkbox',
+                cls: 'subdir-checkbox'
+            });
+            subdirCheckbox.checked = true; // Default to include subdirectories
+            subdirCheckbox.style.marginRight = '8px';
+            
+            subdirOptionContainer.createSpan({ text: 'Include subdirectories' });
+            
+            // Store subdirectory preference
+            this.folderSubdirectoryOptions.set(folder.path, true);
+            
+            // Subdirectory option change handler
+            subdirCheckbox.addEventListener('change', () => {
+                this.folderSubdirectoryOptions.set(folder.path, subdirCheckbox.checked);
+            });
+            
+            // Skip folder itself selection for root
+            if (!folder.isRoot()) {
+                // Handle folder selection
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        // Add folder to selection if not already there
+                        if (!this.selectedFolders.find(f => f.path === folder.path)) {
+                            this.selectedFolders.push(folder);
+                            
+                            // Show subdirectory option
+                            subdirOptionContainer.style.display = 'block';
+                        }
+                    } else {
+                        // Remove folder from selection
+                        this.selectedFolders = this.selectedFolders.filter(f => f.path !== folder.path);
+                        
+                        // Hide subdirectory option
+                        subdirOptionContainer.style.display = 'none';
+                    }
+                    
+                    this.updateSelectionCount(selectionCountEl);
+                });
+            } else {
+                // Make root checkbox invisible
+                checkbox.style.visibility = 'hidden';
+            }
+            
+            // Children container - will hold files and subfolders
+            const childrenContainer = folderItem.createDiv({ cls: 'folder-children' });
+            
+            // Add files in this folder
+            const markdownFiles = folder.children.filter(child => 
+                child instanceof TFile && child.extension === 'md'
+            ).sort((a, b) => a.name.localeCompare(b.name));
+            
+            for (const file of markdownFiles) {
+                this.addFileToTree(childrenContainer, file as TFile, selectionCountEl, level + 1);
+            }
+            
+            // Add subfolders
+            const subfolders = folder.children.filter(child => 
+                child instanceof TFolder
+            ).sort((a, b) => a.name.localeCompare(b.name));
+            
+            for (const subfolder of subfolders) {
+                this.addFolderToTree(childrenContainer, subfolder as TFolder, selectionCountEl, level + 1);
+            }
+            
+            // Make folder expandable
+            headerRow.addEventListener('click', (e) => {
+                // Don't toggle if clicking directly on the checkbox
+                if (e.target !== checkbox) {
+                    const isExpanded = childrenContainer.style.display !== 'none';
+                    childrenContainer.style.display = isExpanded ? 'none' : 'block';
+                    folderIcon.textContent = isExpanded ? '📁 ' : '📂 ';
+                }
+            });
+            
+            // Expanded by default only for root
+            if (!folder.isRoot()) {
+                childrenContainer.style.display = 'none';
+            }
+        }
+    }
+    
+    addFileToTree(parentEl: HTMLElement, file: TFile, selectionCountEl: HTMLElement, level: number = 0) {
+        // Create file item
+        const fileItem = parentEl.createDiv({ cls: 'file-tree-item file-item' });
+        
+        // Header with checkbox
+        const headerRow = fileItem.createDiv({ cls: 'file-tree-header' });
+        headerRow.style.paddingLeft = (level * 20) + 'px';
+        
+        // Checkbox for file selection
+        const checkbox = headerRow.createEl('input', {
+            type: 'checkbox',
+            cls: 'file-checkbox'
+        });
+        checkbox.style.marginRight = '8px';
+        
+        // File icon
+        const fileIcon = headerRow.createSpan({ cls: 'file-icon' });
+        fileIcon.textContent = '📄 ';
+        
+        // File name
+        headerRow.createSpan({ text: file.name, cls: 'file-name' });
+        
+        // Handle file selection
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                // Add file to selection if not already there
+                if (!this.selectedFiles.find(f => f.path === file.path)) {
+                    this.selectedFiles.push(file);
+                }
+            } else {
+                // Remove file from selection
+                this.selectedFiles = this.selectedFiles.filter(f => f.path !== file.path);
+            }
+            
+            this.updateSelectionCount(selectionCountEl);
+        });
+        
+        // Make whole row clickable
+        headerRow.addEventListener('click', (e) => {
+            // Don't toggle if clicking directly on the checkbox
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+                
+                // Trigger the change event
+                const changeEvent = new Event('change');
+                checkbox.dispatchEvent(changeEvent);
+            }
+        });
+    }
+    
+    updateSelectionCount(countEl: HTMLElement) {
+        const fileCount = this.selectedFiles.length;
+        const folderCount = this.selectedFolders.length;
+        const totalCount = fileCount + folderCount;
+        
+        if (totalCount === 0) {
+            countEl.textContent = 'Nothing selected';
+        } else {
+            let text = '';
+            if (fileCount > 0) {
+                text += `${fileCount} file${fileCount !== 1 ? 's' : ''}`;
+            }
+            if (folderCount > 0) {
+                if (fileCount > 0) text += ' and ';
+                text += `${folderCount} folder${folderCount !== 1 ? 's' : ''}`;
+            }
+            text += ' selected';
+            countEl.textContent = text;
+        }
+        
+        // Enable/disable confirm button
+        const confirmButton = this.contentEl.querySelector('.primary-button') as HTMLButtonElement;
+        if (confirmButton) {
+            confirmButton.disabled = totalCount === 0;
+        }
+    }
+    
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
 }
