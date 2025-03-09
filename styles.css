@@ -1,458 +1,463 @@
 /* styles.css */
-/* Base modal styles */
-.yaml-property-manager-modal {
-    padding: 20px;
-    min-width: 500px;
-    width: auto;
-    box-sizing: border-box;
+
+/*===============================
+    1. BASE MODAL STYLES
+===============================*/
+/* YAML Property Manager title */
+.yaml-property-manager-modal h2 {
+  color: #9370DB !important; /* Purple color */
+  margin-bottom: 20px !important;
+  font-size: 1.5em !important;
+  text-align: center !important;
 }
 
+.yaml-property-manager-modal {
+  padding: 20px;
+  min-width: 500px;
+  width: auto;
+  box-sizing: border-box;
+}
+
+.yaml-property-manager-modal div,
+.property-manager-modal div,
+.template-selection-modal div,
+.single-file-property-modal div {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Standard modal size */
+.yaml-modal-standard {
+  width: 95%;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* Modal with scrolling */
+.modal-scrollable {
+  max-height: 85vh;
+  overflow: auto;
+}
+
+/*===============================
+  2. SPECIFIC MODAL TYPES
+===============================*/
 /* Main property manager modal - no scrolling */
 .property-manager-modal {
-    padding: 20px;
-    width: auto;
-    height: auto;
-    max-width: 600px;
-    max-height: none;
-    overflow: visible;
-    margin: 0 auto;
+  padding: 20px;
+  width: auto;
+  height: auto;
+  max-width: 500px;  /* Reduced from 600px or 500px */
+  max-height: none;
+  overflow: visible;
+  margin: 0 auto;
+}
+
+/* Override Obsidian's base modal styles only for the main window */
+.property-manager-modal .modal-container,
+.property-manager-modal .modal-content,
+.property-manager-modal .modal {
+  overflow: visible !important;
+}
+
+.property-manager-modal .modal {
+  max-height: none !important;
+}
+
+/* Single file property modal specifics */
+.single-file-property-modal {
+  padding: 20px;
+  width: auto;
+  max-width: 900px; /* Wider for more content */
+  max-height: 85vh;
+  overflow-y: auto !important; /* Force scrollbar when needed */
+  overflow-x: visible;
+  margin: 0 auto;
+}
+
+.single-file-property-modal .property-container {
+  max-height: none !important; /* Allow container to expand */
+  overflow: visible !important;
 }
 
 /* All other modals - enable scrolling when needed */
 .template-selection-modal,
 .batch-file-selector-modal,
 .file-selector-modal {
-    padding: 20px;
-    width: auto;
-    max-width: 600px;
-    /* Restore scrolling for other modals */
-    max-height: 85vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin: 0 auto;
+  padding: 20px;
+  width: auto;
+  max-width: 600px;
+  /* Restore scrolling for other modals */
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 auto;
 }
 
-/* Single file property modal specifics */
-.single-file-property-modal {
-    padding: 20px;
-    width: auto;
-    max-width: 900px; /* Wider for more content */
-    max-height: 85vh;
-    overflow-y: auto !important; /* Force scrollbar when needed */
-    overflow-x: visible;
-    margin: 0 auto;
-}
-
-.single-file-property-modal .property-container {
-    max-height: none !important; /* Allow container to expand */
-    overflow: visible !important;
+/* Template selection modal specifics */
+.template-selection-modal {
+  padding: 20px 30px 20px 20px; /* Increased right padding for scrollbar */
+  width: auto;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 auto;
+  position: relative; /* For absolute positioning of button container */
+  padding-bottom: 70px !important; /* Extra padding for buttons */
 }
 
 /* Bulk property editor fixing */
 .bulk-property-editor-modal {
-    padding: 20px;
-    width: auto;
-    max-width: 1000px; /* Much wider to accommodate property tables */
-    max-height: 85vh;
-    overflow-y: auto !important;
-    overflow-x: visible !important; /* Prevent horizontal scrolling */
-    margin: 0 auto;
+  padding: 20px;
+  width: auto;
+  max-width: 1000px; /* Much wider to accommodate property tables */
+  max-height: 85vh;
+  overflow-y: auto !important;
+  overflow-x: visible !important; /* Prevent horizontal scrolling */
+  margin: 0 auto;
 }
 
-/* Override Obsidian's base modal styles only for the main window */
-.property-manager-modal .modal-container {
-    overflow: visible !important;
+/* Modal header with back button */
+.modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.property-manager-modal .modal-content {
-    overflow: visible !important;
+.modal-header button {
+  margin-right: 10px;
 }
 
-.property-manager-modal .modal {
-    overflow: visible !important;
-    max-height: none !important;
+.modal-header h2 {
+  margin: 0;
 }
 
+/* Back button style */
+.back-button {
+  margin-right: 10px;
+}
+
+/*===============================
+  3. CONTAINER LAYOUTS
+===============================*/
 /* Containers with fixed height and scrolling */
-.property-container, .template-container {
-    margin: 15px 0;
-    max-height: 400px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    box-sizing: border-box;
-    width: 100%;
+.property-container, 
+.template-container {
+  width: 100%;
+  margin: 15px 0;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.template-selection-modal .property-container {
+  margin-bottom: 80px !important; /* Large margin to avoid button overlap */
+  position: relative;
+  overflow: visible !important;
 }
 
 /* File tree specifically needs fixed height with scroll */
 .file-tree-container {
-    margin: 15px 0;
-    max-height: 400px;
-    min-height: 300px;
-    overflow-y: auto !important;
-    overflow-x: hidden;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    box-sizing: border-box;
-    width: 100%;
-}
-
-/* Change property list from table to block layout */
-.property-list {
-    display: block;
-    width: 100%;
-}
-
-.property-item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 8px;
-    padding: 5px 0;
-    min-width: 700px; /* Ensure minimum width for property rows */
-}
-
-.property-name, .property-value, .property-actions, .property-include, .property-consistent, .property-type {
-    display: block;
-    padding: 2px 5px;
-}
-
-/* Ensure property rows don't shrink too much */
-.property-name, .property-value, .property-type, .property-actions {
-    min-width: fit-content !important;
-    white-space: nowrap;
-}
-
-.property-item.header {
-    font-weight: bold;
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-}
-
-/* For specific property editor sections */
-.property-name {
-    flex: 1;
-    min-width: 100px;
-    max-width: 200px;
-}
-
-.property-type {
-    width: 120px;
-    flex-shrink: 0;
-}
-
-.property-value {
-    flex: 2;
-    min-width: 150px !important;
-    max-width: none !important;
-}
-
-.property-actions {
-    width: 80px;
-    flex-shrink: 0;
-    text-align: center;
-}
-
-.property-include, .property-consistent {
-    width: 30px;
-    flex-shrink: 0;
-    text-align: center;
-}
-
-/* Allow longer property values to wrap */
-.property-value {
-    white-space: normal;
-    word-break: break-word;
-    overflow-wrap: break-word;
-}
-
-.property-value-input {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Ensure button container is always visible */
-.button-container {
-    margin-top: 15px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    width: 100%;
-}
-
-.template-selection-modal .button-container,
-.file-selector-modal .button-container,
-.bulk-property-editor-modal .button-container,
-.batch-file-selector-modal .button-container,
-.single-file-property-modal .button-container {
-    position: sticky;
-    bottom: 0;
-    background: var(--background-primary);
-    padding: 10px 0;
-    margin-top: 15px;
-    border-top: 1px solid var(--background-modifier-border);
-    z-index: 10;
-}
-
-.primary-button {
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-}
-
-.file-tree {
-    margin-top: 10px;
-}
-
-.file-item {
-    padding: 5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
-
-.file-item:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-.file-item.disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.folder-children {
-    margin-left: 10px;
-}
-
-.file-icon {
-    margin-right: 5px;
-}
-
-.selected-count, .selected-files-count {
-    margin: 10px 0;
-    font-style: italic;
-}
-
-/* Update the actions-container to support single column layout */
-.actions-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    box-sizing: border-box;
-    margin: 10px 0;
-}
-
-/* Adjust action-section for the new consolidated layout */
-.action-section {
-    padding: 15px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    box-sizing: border-box;
-    width: 100%;
-}
-
-/* Style for the divider */
-.action-section hr {
-    margin: 20px 0;
-    border: none;
-    border-top: 1px solid var(--background-modifier-border);
-}
-
-.help-container {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: var(--background-secondary);
-    border-radius: 4px;
-    box-sizing: border-box;
-    width: 100%;
+  margin: 15px 0;
+  max-height: 400px;
+  min-height: 300px;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* Fix property containers to prevent horizontal scrolling */
 .bulk-property-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin: 15px 0;
-    width: 100%;
-    box-sizing: border-box;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-    padding-bottom: 60px; /* Make room for fixed buttons */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 15px 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  padding-bottom: 60px; /* Make room for fixed buttons */
+}
+
+/* Update the actions-container to support single column layout */
+.actions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px 0;
+}
+
+/* Adjust action-section for the new consolidated layout */
+.action-section {
+  padding: 15px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Style for the divider */
+.action-section hr {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.help-container {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: var(--background-secondary);
+  border-radius: 4px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* Ensure property containers have proper scroll */
 .existing-properties-section,
 .property-reorder-section,
 .property-list-section,
-.property-delete-section {
-    max-height: 300px;
-    overflow-y: auto !important;
-    overflow-x: visible !important;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 15px;
-    width: 100% !important;
-    box-sizing: border-box;
-}
-
+.property-delete-section,
 .options-section {
-    max-height: 300px;
-    overflow-y: auto !important;
-    overflow-x: visible !important;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 15px;
-    width: 100% !important;
-    box-sizing: border-box;
+  max-height: 300px;
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 15px;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
-.option-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 5px 0;
+/* Property list container */
+.property-list-container {
+  width: 100%;
+  min-width: 700px;
+  overflow-x: visible;
 }
 
-.option-item input[type="checkbox"] {
-    margin-right: 5px;
-}
-
-.property-type-select {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* For adding new properties */
-.new-property-container {
-    margin: 10px 0;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.new-property-container input {
-    flex: 1;
-    min-width: 0;
-    box-sizing: border-box;
-}
-
-.new-property-container select {
-    width: 120px;
-    flex-shrink: 0;
-    box-sizing: border-box;
-}
-
-.new-property-container button {
-    flex-shrink: 0;
-    box-sizing: border-box;
-}
-
-/* Make sure input elements can't overflow */
-input, select, button {
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-/* Ensure buttons don't cause overflow */
-button {
-    white-space: normal; /* Allow text to wrap */
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.property-value input {
-    width: 100%;
-    min-height: 24px;
-}
-
-.property-name input {
-    width: 100%;
-}
-
-.property-type select {
-    width: 100%;
-}
-
-/* Delete property section */
-.property-delete-section .property-list .property-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 8px;
-    box-sizing: border-box;
-}
-
-.property-delete-section .property-list .property-name {
-    flex-grow: 1;
-    margin-right: 10px;
-    max-width: none;
-}
-
-.property-delete-section .property-list .property-actions {
-    width: 50px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-/* Template selection specific */
-.template-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    margin-bottom: 5px;
-    box-sizing: border-box;
-}
-
-/* Common element styling */
-.yaml-property-manager-modal div,
-.property-manager-modal div,
-.template-selection-modal div,
-.single-file-property-modal div {
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.button-container button {
-    min-width: 100px;
+/* Delete list container */
+.delete-list-container {
+  width: 100%; 
+  min-width: 700px;
+  overflow-x: visible;
 }
 
 /* File selection container */
 .file-selection {
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .file-selection button {
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 5px;
 }
 
-/* Specific styles for SingleFilePropertyModal */
+/* New property container styles */
+.new-property-container {
+  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.property-name-input {
+  flex: 1;
+  min-width: 100px;
+  width: 100%;
+}
+
+.property-type-select {
+  width: 100%;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.property-value-input {
+  flex: 2;
+  min-width: 150px;
+  width: 100%;
+}
+
+.property-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/*===============================
+  4. PROPERTY LIST & ITEMS
+===============================*/
+/* Change property list from table to block layout */
+.property-list {
+  display: block;
+  width: 100%;
+  min-width: 700px;
+}
+
+.property-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  flex-wrap: nowrap;
+  margin-bottom: 8px;
+  padding: 5px 0;
+  min-width: 700px; /* Ensure minimum width for property rows */
+}
+
+.property-name, 
+.property-value, 
+.property-actions, 
+.property-include, 
+.property-consistent, 
+.property-type,
+.property-usage,
+.property-examples,
+.property-preserve-value {
+  display: block;
+  padding: 2px 5px;
+}
+
+/* Ensure property rows don't shrink too much */
+.property-name, 
+.property-value, 
+.property-type, 
+.property-actions {
+  min-width: fit-content !important;
+  white-space: nowrap;
+}
+
+.property-item.header {
+  font-weight: bold;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+}
+
+/* For specific property editor sections */
+.property-name {
+  flex: 1;
+  min-width: 100px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.property-type {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.property-value {
+  flex: 2;
+  min-width: 150px !important;
+  max-width: none !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.property-actions {
+  width: 60px;
+  flex-shrink: 0;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.property-include {
+  width: 70px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.property-consistent {
+  width: 120px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+/* Property preservation styles */
+.property-preserve-value {
+  width: 120px !important;
+  flex-shrink: 0 !important;
+  text-align: center !important;
+}
+
+.preserve-value-label {
+  display: none; /* Hide label to save space, rely on header */
+}
+
+/* Property type display */
+.property-type-display {
+  width: 80px !important;
+  flex-shrink: 0 !important;
+  text-align: center !important;
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+/* Property usage stats */
+.property-usage {
+  width: 120px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+/* Property examples */
+.property-examples {
+  flex: 2;
+  min-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9em;
+}
+
+/* Allow longer property values to wrap */
+.property-value {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Make the property item row wider to accommodate new columns */
+.property-container .property-list .property-item {
+  min-width: 800px !important; /* Increase minimum width to fit new columns */
+}
+
+/* Single file property modal specific styles */
 .single-file-property-modal .property-item,
 .yaml-property-manager-modal .property-item {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    width: 100% !important;
-    align-items: center !important;
-    margin-bottom: 8px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
 }
 
 .single-file-property-modal .property-name,
@@ -463,804 +468,628 @@ button {
 .yaml-property-manager-modal .property-type,
 .yaml-property-manager-modal .property-value,
 .yaml-property-manager-modal .property-actions {
-    display: block !important;
-    overflow: hidden !important;
+  display: block !important;
+  overflow: hidden !important;
 }
 
-.single-file-property-modal .property-name,
-.yaml-property-manager-modal .property-name {
-    flex: 1 !important;
-    min-width: 100px !important;
-    max-width: 200px !important;
-}
-
-.single-file-property-modal .property-type,
-.yaml-property-manager-modal .property-type {
-    width: 120px !important;
-    flex-shrink: 0 !important;
-}
-
-.single-file-property-modal .property-value,
-.yaml-property-manager-modal .property-value {
-    flex: 2 !important;
-    min-width: 150px !important;
-}
-
-.single-file-property-modal .property-actions,
-.yaml-property-manager-modal .property-actions {
-    width: 100px !important;
-    flex-shrink: 0 !important;
-    text-align: center !important;
-}
-
-.property-value-input {
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-.property-type-select {
-    width: 100% !important;
-    box-sizing: border-box !important;
+/* Fix for property list to prevent content showing under buttons */
+.template-selection-modal .property-list {
+  margin-bottom: 60px !important; /* Very large margin at bottom */
 }
 
 /* Template property selection specific styles */
 .property-container .property-list .property-item {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    width: 100% !important;
-    align-items: center !important;
-    margin-bottom: 8px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
 }
 
 .property-container .property-include {
-    width: 70px !important;
-    flex-shrink: 0 !important;
-    text-align: center !important;
+  width: 70px !important;
+  flex-shrink: 0 !important;
+  text-align: center !important;
 }
 
 .property-container .property-name {
-    flex: 1 !important;
-    min-width: 120px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+  flex: 1 !important;
+  min-width: 120px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .property-container .property-value {
-    flex: 2 !important;
-    min-width: 150px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+  flex: 2 !important;
+  min-width: 150px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .property-container .property-consistent {
-    width: 120px !important;
-    flex-shrink: 0 !important;
-    text-align: center !important;
+  width: 120px !important;
+  flex-shrink: 0 !important;
+  text-align: center !important;
 }
 
+/* Delete property section */
+.property-delete-section .property-list .property-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.property-delete-section .property-list .property-name {
+  flex-grow: 1;
+  margin-right: 10px;
+  max-width: none;
+}
+
+.property-delete-section .property-list .property-actions {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Option items */
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 5px 0;
+}
+
+.option-item input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+/* Improve the select all container spacing */
 .select-all-container {
-    display: flex !important;
-    align-items: center !important;
-    margin-bottom: 10px !important;
-    width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-bottom: 10px !important;
+  width: 100% !important;
+  margin-right: 15px;
+  padding: 5px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 4px;
 }
 
 .select-all-container input[type="checkbox"] {
-    margin-right: 8px !important;
+  margin-right: 8px !important;
 }
 
-/* Modal header with back button */
-.modal-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    width: 100%;
-    box-sizing: border-box;
+/* Action buttons */
+.edit-property-button, .delete-property-button {
+  padding: 2px 8px;
+  margin: 0 2px;
+  font-size: 0.9em;
 }
 
-.modal-header button {
-    margin-right: 10px;
+/* Move up/down buttons */
+.move-up-button, .move-down-button {
+  padding: 2px;
 }
 
-.modal-header h2 {
-    margin: 0;
+/* Delete button */
+.delete-button {
+  padding: 2px 5px;
 }
 
-/* Styles for existing properties section */
-.existing-properties-list {
-    width: 100%;
+/*===============================
+  5. BUTTON STYLES
+===============================*/
+/* Base button styles */
+.yaml-property-manager-modal button {
+  border-radius: 4px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  font-weight: 500 !important;
+  min-width: 120px !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  background-color: var(--background-primary) !important;
+  color: var(--text-normal) !important;
+  display: block !important;
+  width: 100% !important;
+  margin: 8px 0 !important;
+  text-align: center !important;
 }
 
-.property-usage {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    text-align: center;
+.yaml-property-manager-modal button:hover {
+  background-color: var(--background-primary-alt) !important;
+  border-color: var(--background-modifier-border-hover) !important;
 }
 
-.property-examples {
-    font-size: 0.9em;
-    color: var(--text-normal);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* File selection buttons */
+.file-selection-button, .file-action-button {
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Loading spinner */
-.property-scan-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    width: 100%;
+/* Property button styles */
+.add-property-button, .add-delete-property-button {
+  width: 100%;
 }
 
-.spinner {
-    width: 30px;
-    height: 30px;
-    border: 3px solid var(--background-modifier-border);
-    border-top: 3px solid var(--interactive-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+/* Primary button styles */
+.yaml-property-manager-modal button.primary-button,
+.yaml-property-manager-modal .button-container button.primary-button {
+  background-color: #9370DB !important; /* Consistent purple */
+  color: white !important;
+  border-color: #7A56D4 !important;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.yaml-property-manager-modal button.primary-button:hover,
+.yaml-property-manager-modal .button-container button.primary-button:hover {
+  background-color: #7A56D4 !important;
+  border-color: #6542B8 !important;
 }
 
-/* Make action buttons in existing properties more compact */
-.existing-properties-section .property-actions button {
-    padding: 2px 8px;
-    margin: 0 2px;
-    font-size: 0.9em;
+/* Button container spacing */
+.yaml-property-manager-modal .button-container {
+  margin-top: 20px !important;
+  padding: 10px 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  width: 100% !important;
 }
 
-/* Highlight rows on hover */
-.existing-properties-section .property-item:not(.header):hover {
-    background-color: var(--background-modifier-hover);
+/* Fixed button container at bottom */
+.button-container.sticky {
+  position: sticky !important;
+  bottom: 0 !important;
+  background: var(--background-primary) !important;
+  padding: 15px 0 !important;
+  border-top: 1px solid var(--background-modifier-border) !important;
+  z-index: 10 !important;
+  box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
 }
 
-/* Property Reordering Section */
-.property-reorder-list {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    width: 100%;
-    min-width: 700px;
+/* Button sizes in containers */
+.button-container button {
+  width: auto !important;
+  min-width: 120px !important;
 }
 
-.property-reorder-item {
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    margin-bottom: 5px;
-    background-color: var(--background-secondary);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    cursor: move;
-    transition: all 0.2s ease;
-    width: 100%;
-    min-width: 650px;
+/* Disabled state */
+.yaml-property-manager-modal button[disabled],
+.yaml-property-manager-modal button.disabled,
+.yaml-property-manager-modal button[disabled]:hover,
+.yaml-property-manager-modal button.disabled:hover {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: var(--background-secondary-alt) !important;
+  color: var(--text-muted) !important;
 }
 
-.property-reorder-item:hover {
-    background-color: var(--background-modifier-hover);
+/* Close button specific styling */
+.yaml-property-manager-modal button[text="Close"] {
+  margin-top: 30px !important;
+  width: 40% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
-.property-drag-handle {
-    margin-right: 10px;
-    color: var(--text-muted);
-    cursor: grab;
-    font-size: 1.2em;
+/* Add templates button in settings */
+.add-templates-button {
+  margin-bottom: 20px;
+  margin-top: 10px;
 }
 
-.property-reorder-name {
-    flex: 1;
-    font-weight: 500;
+/* Separation between action buttons in the main window */
+.property-manager-modal .action-button-separation {
+  margin: 20px 0;
 }
 
-.property-reorder-buttons {
-    display: flex;
-    gap: 4px;
+/* More obvious separation with a subtle divider */
+.property-manager-modal .main-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.property-reorder-buttons button {
-    padding: 2px 8px;
-    font-size: 0.9em;
+/*===============================
+  6. FILE TREE & NAVIGATION
+===============================*/
+.file-tree {
+  margin-top: 10px;
 }
 
-.property-reorder-apply {
-    margin-top: 15px;
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-    padding: 6px 12px;
-    width: 100%;
+.file-item, .folder-item, .file-tree-item {
+  padding: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
-/* Drag and drop styling */
-.property-reorder-item.dragging {
-    opacity: 0.5;
+.file-item:hover, .folder-item:hover, .file-tree-item:hover {
+  background-color: var(--background-modifier-hover);
 }
 
-.property-reorder-item.dragover {
-    border: 2px dashed var(--interactive-accent);
-    background-color: var(--background-modifier-hover);
-}
-
-/* Responsive styles */
-@media screen and (max-width: 768px) {
-    .yaml-property-manager-modal,
-    .property-manager-modal {
-        width: 95%;
-        padding: 15px;
-        min-width: auto;
-    }
-
-    .property-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .property-name, .property-type, .property-value, .property-actions {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .actions-container {
-        grid-template-columns: 1fr;
-    }
-
-    .new-property-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .new-property-container input, 
-    .new-property-container select, 
-    .new-property-container button {
-        width: 100%;
-        margin-bottom: 5px;
-    }
-}
-
-@media screen and (max-width: 650px) {
-    .property-manager-modal {
-        min-width: auto;
-        width: 95%;
-        padding: 15px;
-    }
-}
-
-/* Styles for disabled reordering */
-.property-reorder-warning {
-    color: var(--text-error);
-    font-weight: 500;
-}
-
-.property-reorder-list.disabled {
-    opacity: 0.75;
-}
-
-.property-reorder-item.disabled {
-    cursor: default;
-    background-color: var(--background-secondary-alt);
-}
-
-.property-drag-handle.disabled {
-    color: var(--text-muted);
-    cursor: default;
-}
-
-.property-reorder-usage {
-    font-size: 0.85em;
-    color: var(--text-muted);
-    margin-left: auto;
-    padding-right: 10px;
-}
-
-/* Template path management styles */
-.template-paths-container {
-    margin-bottom: 20px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-}
-
-.template-path-list {
-    margin-top: 10px;
-}
-
-.template-path-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    padding: 8px;
-    background-color: var(--background-secondary);
-    border-radius: 4px;
-}
-
-.template-path-icon {
-    margin-right: 8px;
-}
-
-.template-path-text {
-    flex: 1;
-}
-
-.template-path-subdir {
-    margin-left: 8px;
-    font-size: 0.9em;
-    color: var(--text-muted);
-}
-
-/* Folder selector styles */
-.folder-selector-modal {
-    padding: 20px;
-    width: auto;
-    max-width: 600px;
-    max-height: 85vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin: 0 auto;
-}
-
-.folder-tree-container {
-    margin: 15px 0;
-    max-height: 400px;
-    min-height: 200px;
-    overflow-y: auto !important;
-    overflow-x: hidden;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    box-sizing: border-box;
-    width: 100%;
-}
-
-.folder-item {
-    padding: 5px;
-    border-radius: 4px;
-}
-
-.folder-item.selectable {
-    cursor: pointer;
-}
-
-.folder-item.selectable:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-.folder-icon {
-    margin-right: 5px;
-}
-
-.folder-name {
-    flex: 1;
-}
-
-.subfolder-container {
-    margin-left: 20px;
-}
-
-/* Template selection enhancements */
-.templates-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    width: 100%;
-}
-
-.template-source-group {
-    margin-bottom: 10px;
-}
-
-.template-source-header {
-    cursor: pointer;
-    padding: 8px;
-    background-color: var(--background-secondary);
-    border-radius: 4px;
-    margin-bottom: 5px;
-    display: flex;
-    align-items: center;
-}
-
-.template-source-header:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-.source-templates {
-    padding-left: 15px;
-}
-
-.no-templates-message {
-    padding: 10px;
-    background-color: var(--background-secondary);
-    border-radius: 4px;
-    color: var(--text-muted);
-    text-align: center;
-}
-
-/* Recent templates section */
-.recent-templates {
-    margin-bottom: 20px;
-    padding: 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    background-color: var(--background-primary-alt);
-}
-
-/* Hierarchical folder browser styles */
-.folder-tree-container {
-    margin: 15px 0;
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.folder-tree-item {
-    margin-bottom: 1px;
-}
-
-.folder-tree-header {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.folder-tree-header.selectable:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-.folder-toggle-icon {
-    cursor: pointer;
-    width: 16px;
-    text-align: center;
-    margin-right: 2px;
-    user-select: none;
-}
-
-.folder-icon, .file-icon {
-    margin-right: 4px;
-}
-
-.folder-name, .file-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.file-item.disabled, .folder-item.disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .folder-children {
-    margin-left: 12px;
+  margin-left: 16px;
 }
 
-/* Simplified folder browser styles */
-.folder-tree-container {
-    margin: 15px 0;
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
+.folder-children.collapsed {
+  display: none;
 }
 
-.folder-tree-item {
-    margin-bottom: 1px;
+.file-icon, .folder-icon {
+  margin-right: 5px;
+  color: #E8BA36; /* Folder color */
 }
 
-.folder-tree-header {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    border-radius: 4px;
-    cursor: pointer;
+.file-checkbox, .folder-checkbox {
+  margin-right: 8px;
 }
 
-.folder-tree-header.selectable:hover {
-    background-color: var(--background-modifier-hover);
+.file-tree-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
 }
 
-.folder-icon, .file-icon {
-    margin-right: 8px;
-    cursor: pointer;
+.file-tree-header:hover {
+  background-color: var(--background-modifier-hover);
 }
 
-.folder-name, .file-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.file-tree-header.selectable {
+  cursor: pointer;
 }
 
-.folder-children {
-    margin-left: 12px;
+.selected-count, .selected-files-count {
+  margin: 10px 0;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* Template selection specific */
+.template-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 5px;
+  padding: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.template-option:hover {
+  background-color: var(--background-modifier-hover);
 }
 
 /* Template tree view */
 .template-tree-container {
-    margin: 15px 0;
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
+  margin: 15px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .template-tree-item {
-    margin-bottom: 1px;
+  margin-bottom: 2px;
+  transition: background-color 0.1s ease;
 }
 
 .template-tree-header {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    border-radius: 4px;
-    transition: background-color 0.1s ease;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border-radius: 4px;
+  transition: background-color 0.1s ease;
 }
 
 .template-tree-header:hover {
-    background-color: var(--background-modifier-hover);
+  background-color: var(--background-modifier-hover);
 }
 
 .template-tree-children {
-    margin-left: 12px;
+  margin-left: 12px;
+  transition: all 0.2s ease;
 }
 
-.template-folder .template-tree-header {
-    cursor: pointer;
-}
-
+.template-folder .template-tree-header,
 .template-file .template-tree-header {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .template-radio-container {
-    display: flex;
-    align-items: center;
-    margin-right: 4px;
-}
-
-/* Selected template info */
-.selected-template-info {
-    margin-bottom: 15px;
-    padding: 8px;
-    background-color: var(--background-secondary);
-    border-radius: 4px;
-}
-
-/* Recent templates */
-.recent-templates {
-    margin-bottom: 20px;
-    padding: 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    background-color: var(--background-primary-alt);
-}
-
-.template-option {
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
-    padding: 5px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.1s ease;
-}
-
-.template-option:hover {
-    background-color: var(--background-modifier-hover);
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
 }
 
 /* Enhanced Template File Selector Modal styles */
 .template-file-selector-modal {
-    padding: 20px;
-    width: 95%;
-    max-width: 900px;
-    max-height: 85vh;
-    overflow-y: auto;
-    margin: 0 auto;
+  padding: 20px;
+  width: 95%;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+  margin: 0 auto;
 }
 
-.file-tree-container {
-    margin: 15px 0;
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
+/* Selected template info */
+.selected-template-info {
+  background-color: var(--background-secondary-alt);
+  border-radius: 6px;
+  padding: 12px 15px;
+  margin: 15px 0 25px 0;
+  font-size: 0.9em;
+  border-left: 3px solid #9370DB;
+  margin-bottom: 15px; 
 }
 
-.file-tree-item {
-    margin-bottom: 2px;
+/* Recent templates */
+.recent-templates {
+  margin-bottom: 20px;
 }
 
-.file-tree-header {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.1s ease;
+/*===============================
+  7. PROPERTY REORDERING
+===============================*/
+/* Property Reordering Section */
+.property-reorder-list {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+  min-width: 700px;
 }
 
-.file-tree-header:hover {
-    background-color: var(--background-modifier-hover);
+.property-reorder-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 5px;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  cursor: move;
+  transition: all 0.2s ease;
+  width: 100%;
+  min-width: 650px;
 }
 
-.folder-icon, .file-icon {
-    margin-right: 4px;
+.property-reorder-item:hover {
+  background-color: var(--background-modifier-hover);
 }
 
-.folder-children {
-    margin-left: 16px;
+.property-drag-handle {
+  margin-right: 10px;
+  color: var(--text-muted);
+  cursor: grab;
+  font-size: 1.2em;
 }
 
-.selection-count {
-    margin: 10px 0;
-    font-style: italic;
-    color: var(--text-muted);
+.property-reorder-name {
+  flex: 1;
+  font-weight: 500;
 }
 
-/* Hierarchical Template Paths display in settings */
+.property-reorder-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.property-reorder-buttons button {
+  padding: 2px 8px;
+  font-size: 0.9em;
+}
+
+.property-reorder-apply {
+  margin-top: 15px;
+  background-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
+  padding: 6px 12px;
+  width: 100%;
+}
+
+/* Drag and drop styling */
+.property-reorder-item.dragging {
+  opacity: 0.5;
+}
+
+.property-reorder-item.dragover {
+  border: 2px dashed var(--interactive-accent);
+  background-color: var(--background-modifier-hover);
+}
+
+/* Styles for disabled reordering */
+.property-reorder-warning {
+  color: var(--text-error);
+  font-weight: 500;
+}
+
+.property-reorder-list.disabled {
+  opacity: 0.75;
+}
+
+.property-reorder-item.disabled {
+  cursor: default;
+  background-color: var(--background-secondary-alt);
+}
+
+.property-drag-handle.disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.property-reorder-usage {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-left: auto;
+  padding-right: 10px;
+}
+
+/*===============================
+  8. LOADING INDICATORS
+===============================*/
+/* Loading spinner */
+.property-scan-loading,
+.templates-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  width: 100%;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--background-modifier-border);
+  border-top: 3px solid var(--interactive-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/*===============================
+  9. SETTINGS TAB STYLING
+===============================*/
 .template-paths-container {
-    margin-bottom: 20px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    padding: 10px;
-    max-height: 300px;
-    overflow-y: auto;
+  margin-bottom: 20px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-.template-tree-item {
-    margin-bottom: 2px;
-}
-
-.template-tree-header {
-    display: flex;
-    align-items: center;
-    padding: 4px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.1s ease;
-}
-
-.template-tree-header:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-.template-tree-children {
-    margin-left: 16px;
-}
-
-.template-path-icon {
-    margin-right: 4px;
-}
-
-.template-path-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Make the Browse button more prominent */
-.mod-cta {
-    background-color: var(--interactive-accent) !important;
-    color: var(--text-on-accent) !important;
-    font-weight: 500;
-    padding: 6px 12px;
-}
-
-/* Improved template tree item styles */
-.template-tree-item {
-    margin-bottom: 2px;
-    transition: background-color 0.1s ease;
-}
-
-.template-tree-header {
-    display: flex;
-    align-items: center;
-    padding: 6px 4px;
-    border-radius: 4px;
-}
-
-.template-tree-header.expandable:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-.template-path-icon {
-    margin-right: 8px;
-}
-
-.template-path-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Improve child container display */
-.template-tree-children {
-    margin-left: 12px;
-    transition: all 0.2s ease;
-}
-
-/* Enhanced clickable folder headers */
-.template-tree-header.expandable {
-    cursor: pointer;
-}
-
-.template-tree-header.expandable:hover {
-    background-color: var(--background-modifier-hover);
-}
-
-/* Make folder icons more visible */
-.template-path-icon {
-    min-width: 16px;
-    text-align: center;
-}
-
-/* Smoother transitions for expand/collapse */
-.template-tree-children {
-    margin-left: 12px;
-    transition: all 0.2s ease;
-}
-
-/* Template node styles - NEW implementation */
 .template-node {
-    margin-bottom: 2px;
+  margin-bottom: 2px;
 }
 
 .template-node-header {
-    display: flex;
-    align-items: center;
-    padding: 6px 8px;
-    border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border-radius: 4px;
+  transition: background-color 0.1s ease;
+}
+
+.template-node-header:hover {
+  background-color: var(--background-modifier-hover);
 }
 
 .template-node-header.is-folder {
-    cursor: pointer;
-}
-
-.template-node-header.is-folder:hover {
-    background-color: var(--background-modifier-hover);
+  cursor: pointer;
 }
 
 .template-node-icon {
-    margin-right: 8px;
-    min-width: 16px;
-    text-align: center;
+  margin-right: 5px;
 }
 
 .template-node-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  flex: 1;
 }
 
 .template-node-remove {
-    margin-left: 8px;
-    opacity: 0.8;
+  background-color: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  min-width: auto !important;
+  padding: 2px 8px !important;
+  margin: 0 !important;
 }
 
 .template-node-remove:hover {
-    opacity: 1;
+  color: var(--text-error) !important;
+  background-color: transparent !important;
 }
 
 .template-node-children {
-    margin-left: 16px;
+  margin-left: 12px;
+}
+
+.template-node-children.collapsed {
+  display: none;
+}
+
+.setting-item-description {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/*===============================
+  10. RESPONSIVE STYLES
+===============================*/
+@media screen and (max-width: 768px) {
+  .yaml-property-manager-modal,
+  .property-manager-modal {
+      width: 95%;
+      padding: 15px;
+      min-width: auto;
+  }
+
+  .property-item {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+
+  .property-name, .property-type, .property-value, .property-actions {
+      width: 100%;
+      max-width: 100%;
+  }
+
+  .actions-container {
+      grid-template-columns: 1fr;
+  }
+
+  .new-property-container {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+
+  .new-property-container input, 
+  .new-property-container select, 
+  .new-property-container button {
+      width: 100%;
+      margin-bottom: 5px;
+  }
+}
+
+@media screen and (max-width: 650px) {
+  .property-manager-modal {
+      min-width: auto;
+      width: 95%;
+      padding: 15px;
+  }
+}
+
+/*===============================
+  11. NO TEMPLATES MESSAGE
+===============================*/
+.no-templates-message {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
 }
