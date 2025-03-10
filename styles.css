@@ -3,174 +3,153 @@
    =================================================== */
 
 /* ===========================================
-   1. CSS VARIABLES
-   =========================================== */
-
-/* 
- * This section defines all customizable aspects of the YAML Property Manager UI.
- * Modifying these variables allows for consistent appearance changes across
- * the entire plugin without editing individual component styles.
- */
-
- :root {
-  /* 1.1. Colors
-   * These variables control the color scheme of the plugin.
-   * The primary color is used for important buttons, headers, and highlights.
-   * Modify these to match your preferred theme or Obsidian color scheme.
-   */
-  --yaml-primary: #9370DB;             /* Primary brand color (purple) - used for main actions, headers */
-  --yaml-primary-dark: #7A56D4;        /* Darker version of primary - used for hover states */
-  --yaml-primary-darker: #6542B8;      /* Even darker primary - used for active/pressed states */
-  --yaml-folder-icon: #E8BA36;         /* Folder icon color - provides visual distinction for folders */
-  
-  /* 1.2. Spacing
-   * These variables ensure consistent spacing throughout the UI.
-   * Using a tiered approach (xs through xl) creates visual hierarchy.
-   * Increase these values for a more spacious layout, decrease for a denser interface.
-   */
-  --yaml-spacing-xs: 4px;              /* Extra small spacing - for tight areas, icons, and compact elements */
-  --yaml-spacing-sm: 8px;              /* Small spacing - for buttons padding, item margins, and form elements */
-  --yaml-spacing-md: 12px;             /* Medium spacing - default spacing between related elements */
-  --yaml-spacing-lg: 20px;             /* Large spacing - for section margins and major component separation */
-  --yaml-spacing-xl: 30px;             /* Extra large spacing - for significant layout divisions */
-  
-  /* 1.3. Font Sizes
-   * These variables control text size throughout the interface.
-   * Using relative units (em) ensures compatibility with Obsidian's text scaling.
-   * Adjust these for better readability or to fit more content on screen.
-   */
-  --yaml-font-xs: 0.85em;              /* Extra small font - for auxiliary information and metadata */
-  --yaml-font-sm: 0.9em;               /* Small font - for secondary information, descriptive text */
-  --yaml-font-md: 1em;                 /* Medium font - for standard body text and most UI elements */
-  --yaml-font-lg: 1.2em;               /* Large font - for section headings and emphasis */
-  --yaml-font-xl: 1.5em;               /* Extra large font - for modal titles and major headings */
-  
-  /* 1.4. Border Radius
-   * These variables control the roundness of corners across elements.
-   * Consistent border-radius creates a cohesive look across the UI.
-   * Larger values create a more rounded, friendly appearance; smaller values for a more squared look.
-   */
-  --yaml-radius-sm: 4px;               /* Small radius - for buttons, inputs, and most containers */
-  --yaml-radius-md: 6px;               /* Medium radius - for larger containers and important elements */
-  
-  /* 1.5. Transitions
-   * These variables ensure smooth animations throughout the interface.
-   * Affects hover effects, expanding/collapsing elements, and other dynamic behaviors.
-   * Adjust timing for snappier or more relaxed transitions.
-   */
-  --yaml-transition-fast: all 0.1s ease;   /* Fast transitions - for immediate feedback (button presses) */
-  --yaml-transition-normal: all 0.15s ease; /* Normal transitions - for standard hover effects */
-  --yaml-transition-slow: all 0.2s ease;   /* Slow transitions - for larger UI shifts (expanding panels) */
-  
-  /* 1.6. Main Window Dimensions
-   * These variables control the size constraints of different modal windows.
-   * Adjust these to change how much screen space the plugin utilizes.
-   * Smaller values for a more compact UI, larger for more expansive views.
-   */
-  --yaml-window-min-width: 500px;          /* Minimum width for all modal windows */
-  --yaml-window-max-width-small: 600px;    /* Max width for smaller windows (file selectors) */
-  --yaml-window-max-width-medium: 900px;   /* Max width for medium windows (template selection) */
-  --yaml-window-max-width-large: 1000px;   /* Max width for large windows (bulk editor) */
-  --yaml-window-max-height: 85vh;          /* Maximum height as percentage of viewport height */
-  
-  /* 1.7. Component Dimensions
-   * These variables control specific UI component sizes.
-   * Modify these to adjust the proportions of internal UI elements.
-   * Consider screen real estate when modifying these values.
-   */
-  --yaml-container-max-height: 400px;      /* Maximum height for scrollable containers */
-  --yaml-container-min-height: 300px;      /* Minimum height for containers that should show sufficient content */
-  --yaml-property-item-min-width: 700px;   /* Minimum width for property rows (ensures all columns are visible) */
-  --yaml-button-min-width: 120px;          /* Minimum width for buttons (ensures proper clickable area) */
-}
-
-/* ===========================================
    2. COMMON BASE STYLES
    =========================================== */
 
 /* 2.1. Base Window Styles */
 .yaml-window {
-  padding: var(--yaml-spacing-lg);
-  min-width: var(--yaml-window-min-width);
+  padding: 20px;
+  min-width: 300px;
   width: auto;
   box-sizing: border-box;
 }
 
 .yaml-window h2 {
-  color: var(--yaml-primary) !important;
-  margin-bottom: var(--yaml-spacing-lg) !important;
-  font-size: var(--yaml-font-xl) !important;
-  text-align: center !important;
+  font-size: var(--h2-size) !important;
+  color: var(--h2-color, var(--text-normal)) !important;
+  font-weight: var(--h2-weight) !important;
+  line-height: var(--h2-line-height) !important;
+  margin-bottom: var(--h2-margin-bottom, 20px) !important;
+  border-bottom: var(--h2-border-bottom, none) !important;
+  text-align: left !important;
+}
+
+.yaml-window h3 {
+  font-size: var(--h3-size) !important;
+  color: var(--h3-color, var(--text-normal)) !important;
+  font-weight: var(--h3-weight) !important;
+  line-height: var(--h3-line-height) !important;
+  margin-bottom: var(--h3-margin-bottom, 16px) !important;
+}
+
+.yaml-window h4 {
+  font-size: var(--h4-size) !important;
+  color: var(--h4-color, var(--text-normal)) !important;
+  font-weight: var(--h4-weight) !important;
+  line-height: var(--h4-line-height) !important;
+  margin-bottom: var(--h4-margin-bottom, 12px) !important;
+}
+
+.yaml-window h5 {
+  font-size: var(--h5-size) !important;
+  color: var(--h5-color, var(--text-normal)) !important;
+  font-weight: var(--h5-weight) !important;
+  line-height: var(--h5-line-height) !important;
+  margin-bottom: var(--h5-margin-bottom, 8px) !important;
+}
+
+.yaml-window p, 
+.yaml-window span, 
+.yaml-window div {
+  color: var(--text-normal);
+  font-size: var(--font-text-size, 16px);
+  line-height: var(--line-height-normal, 1.5);
+}
+
+.yaml-window .yaml-settings-description,
+.yaml-window .yaml-file-selection__count,
+.yaml-window .yaml-selected-count,
+.yaml-window .yaml-message--no-templates {
+  color: var(--text-muted);
+  font-size: var(--font-smaller);
+}
+
+.yaml-window strong, 
+.yaml-window b {
+  font-weight: var(--font-bold, 600);
+}
+
+.yaml-window em,
+.yaml-window i {
+  font-style: italic;
 }
 
 /* 2.2. Header Styles */
 .yaml-header {
   display: flex;
   align-items: center;
-  margin-bottom: var(--yaml-spacing-md);
+  margin-bottom: var(--size-4-4, 12px);
   width: 100%;
   box-sizing: border-box;
+  border-bottom: var(--divider-width, 1px) solid var(--background-modifier-border);
+  padding-bottom: var(--size-4-2, 8px);
 }
 
 .yaml-header__back-button {
-  margin-right: var(--yaml-spacing-sm);
+  margin-right: 8px;
 }
 
 .yaml-header__title {
   margin: 0;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-medium);
+  color: var(--h4-color, var(--text-normal));
 }
 
 /* 2.3. Common Button Styles */
+/* 2.3. Common Button Styles */
 .yaml-button {
-  border-radius: var(--yaml-radius-sm) !important;
-  padding: var(--yaml-spacing-sm) var(--yaml-spacing-md) !important;
-  font-size: var(--yaml-font-md) !important;
-  cursor: pointer !important;
-  transition: var(--yaml-transition-normal) !important;
-  font-weight: 500 !important;
-  min-width: var(--yaml-button-min-width) !important;
-  border: 1px solid var(--background-modifier-border) !important;
-  background-color: var(--background-primary) !important;
+  border-radius: var(--button-radius) !important;
+  font-size: var(--font-ui-small) !important;
+  font-weight: var(--font-normal) !important;
+  padding: var(--size-4-1) var(--size-4-3) !important;
+  height: var(--input-height) !important;
+  background-color: var(--interactive-normal) !important;
   color: var(--text-normal) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  min-width: 120px !important;
   display: block !important;
   width: 100% !important;
-  margin: var(--yaml-spacing-sm) 0 !important;
+  margin: 8px 0 !important;
   text-align: center !important;
+  box-shadow: var(--input-shadow) !important;
 }
 
 .yaml-button:hover {
-  background-color: var(--background-primary-alt) !important;
-  border-color: var(--background-modifier-border-hover) !important;
+  background-color: var(--interactive-hover) !important;
+  box-shadow: var(--input-shadow-hover) !important;
 }
 
 .yaml-button--disabled {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
-  background-color: var(--background-secondary-alt) !important;
+  background-color: var(--interactive-normal) !important;
   color: var(--text-muted) !important;
 }
 
 .yaml-button--confirm {
-  background-color: var(--yaml-primary) !important;
-  color: white !important;
-  border-color: var(--yaml-primary-dark) !important;
+  background-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
+  border-color: var(--interactive-accent) !important;
 }
 
 .yaml-button--confirm:hover {
-  background-color: var(--yaml-primary-dark) !important;
-  border-color: var(--yaml-primary-darker) !important;
+  background-color: var(--interactive-accent-hover) !important;
+  border-color: var(--interactive-accent-hover) !important;
 }
 
 .yaml-button--cancel {
-  background-color: var(--background-secondary) !important;
+  background-color: var(--interactive-normal) !important;
 }
 
 .yaml-button-container {
-  margin-top: var(--yaml-spacing-lg) !important;
-  padding: var(--yaml-spacing-sm) 0 !important;
+  margin-top: 20px !important;
+  padding: 8px 0 !important;
   display: flex !important;
   justify-content: center !important;
-  gap: var(--yaml-spacing-sm) !important;
+  gap: 8px !important;
   width: 100% !important;
 }
 
@@ -178,7 +157,7 @@
   position: sticky !important;
   bottom: 0 !important;
   background: var(--background-primary) !important;
-  padding: var(--yaml-spacing-md) 0 !important;
+  padding: 12px 0 !important;
   border-top: 1px solid var(--background-modifier-border) !important;
   z-index: 10 !important;
   box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
@@ -187,7 +166,7 @@
 
 .yaml-button-container button {
   width: auto !important;
-  min-width: var(--yaml-button-min-width) !important;
+  min-width: 120px !important;
 }
 
 /* 2.4. Loading Indicators */
@@ -197,7 +176,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--yaml-spacing-lg);
+  padding: 20px;
   width: 100%;
 }
 
@@ -220,11 +199,11 @@
   color: var(--text-muted);
   font-style: italic;
   text-align: center;
-  padding: var(--yaml-spacing-lg);
+  padding: 20px;
 }
 
 .yaml-selected-count {
-  margin: var(--yaml-spacing-sm) 0;
+  margin: 8px 0;
   font-style: italic;
   color: var(--text-muted);
 }
@@ -235,10 +214,10 @@
 
 /* 3.1. Main Container */
 .yaml-window__property-manager {
-  padding: var(--yaml-spacing-lg);
+  padding: 20px;
   width: auto;
   height: auto;
-  max-width: var(--yaml-window-min-width);
+  max-width: 300px;
   max-height: none;
   overflow: visible;
   margin: 0 auto;
@@ -248,22 +227,22 @@
 .yaml-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--yaml-spacing-lg);
+  gap: 20px;
   width: 100%;
   box-sizing: border-box;
-  margin: var(--yaml-spacing-sm) 0;
+  margin: 8px 0;
 }
 
 .yaml-action-section {
-  padding: var(--yaml-spacing-md);
+  padding: 12px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--yaml-radius-sm);
+  border-radius: 4px;
   box-sizing: border-box;
   width: 100%;
 }
 
 .yaml-action-section__divider {
-  margin: var(--yaml-spacing-lg) 0;
+  margin: 20px 0;
   border: none;
   border-top: 1px solid var(--background-modifier-border);
 }
@@ -274,11 +253,11 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: var(--yaml-spacing-sm);
+  gap: 8px;
 }
 
 .yaml-file-selection__count {
-  margin-top: var(--yaml-spacing-xs);
+  margin-top: 4px;
   font-style: italic;
   color: var(--text-muted);
 }
@@ -286,7 +265,7 @@
 .yaml-file-selection button {
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: var(--yaml-spacing-xs);
+  margin-bottom: 4px;
 }
 
 /* 3.4. Action Buttons */
@@ -300,12 +279,12 @@
 }
 
 .yaml-button--primary {
-  background-color: var(--yaml-primary) !important;
-  color: white !important;
+  background-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
 }
 
 .yaml-button--bulk-edit {
-  background-color: var(--background-secondary-alt) !important;
+  background-color: var(--interactive-normal) !important;
 }
 
 /* ===========================================
@@ -314,10 +293,10 @@
 
 /* 4.1. Main Container */
 .yaml-window__single-file {
-  padding: var(--yaml-spacing-lg);
+  padding: 20px;
   width: auto;
-  max-width: var(--yaml-window-max-width-medium);
-  max-height: var(--yaml-window-max-height);
+  max-width: 900px;
+  max-height: 85vh;
   overflow-y: auto !important;
   overflow-x: visible;
   margin: 0 auto;
@@ -326,13 +305,13 @@
 /* 4.2. Property Container */
 .yaml-property-container {
   width: 100%;
-  margin: var(--yaml-spacing-md) 0;
-  max-height: var(--yaml-container-max-height);
+  margin: 12px 0;
+  max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--yaml-radius-sm);
-  padding: var(--yaml-spacing-sm);
+  border-radius: 4px;
+  padding: 8px;
   box-sizing: border-box;
 }
 
@@ -340,7 +319,7 @@
 .yaml-property-list {
   display: block;
   width: 100%;
-  min-width: var(--yaml-property-item-min-width);
+  min-width: 700px;
 }
 
 .yaml-property-item {
@@ -349,16 +328,16 @@
   align-items: center;
   width: 100%;
   flex-wrap: nowrap;
-  margin-bottom: var(--yaml-spacing-sm);
-  padding: var(--yaml-spacing-xs) 0;
-  min-width: var(--yaml-property-item-min-width);
+  margin-bottom: 8px;
+  padding: 4px 0;
+  min-width: 700px;
 }
 
 .yaml-property-item--header {
   font-weight: bold;
   border-bottom: 1px solid var(--background-modifier-border);
-  margin-bottom: var(--yaml-spacing-sm);
-  padding-bottom: var(--yaml-spacing-sm);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
 }
 
 /* 4.4. Property Item Cells */
@@ -392,7 +371,7 @@
   text-align: center;
   display: flex;
   justify-content: center;
-  gap: var(--yaml-spacing-xs);
+  gap: 4px;
 }
 
 /* 4.5. Property Buttons */
@@ -402,27 +381,26 @@
 
 .yaml-button--move-up, 
 .yaml-button--move-down {
-  padding: 2px;
+  padding: 2px !important;
+  min-width: auto !important;
+  height: auto !important;
 }
 
 .yaml-button--delete-item {
-  padding: 2px 5px;
+  padding: 2px 5px !important;
+  min-width: auto !important;
+  height: auto !important;
 }
 
 .yaml-button--save {
-  background-color: var(--yaml-primary) !important;
-  color: white !important;
+  background-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
 }
 
 /* 4.6. New Property Form */
-.yaml-new-property {
-  margin: var(--yaml-spacing-sm) 0;
+.yaml-new-property__buttons {
   display: flex;
-  gap: var(--yaml-spacing-sm);
-  align-items: center;
-  flex-wrap: wrap;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 4px;
 }
 
 .yaml-new-property__name {
@@ -442,7 +420,7 @@
 
 .yaml-new-property__buttons {
   display: flex;
-  gap: var(--yaml-spacing-xs);
+  gap: 4px;
 }
 
 .yaml-button--add {
@@ -456,10 +434,10 @@
 
 /* 5.1. Main Container */
 .yaml-window__template-selection {
-  padding: var(--yaml-spacing-lg) var(--yaml-spacing-lg) var(--yaml-spacing-lg) var(--yaml-spacing-lg);
+  padding: 20px 20px 20px 20px;
   width: auto;
-  max-width: var(--yaml-window-max-width-medium);
-  max-height: var(--yaml-window-max-height);
+  max-width: 900px;
+  max-height: 85vh;
   overflow-y: auto;
   overflow-x: hidden;
   margin: 0 auto;
@@ -475,31 +453,31 @@
 /* 5.3. Template Container */
 .yaml-template-container {
   width: 100%;
-  margin: var(--yaml-spacing-md) 0;
-  max-height: var(--yaml-container-max-height);
+  margin: 12px 0;
+  max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--yaml-radius-sm);
-  padding: var(--yaml-spacing-sm);
+  border-radius: 4px;
+  padding: 8px;
   box-sizing: border-box;
 }
 
 /* 5.4. Recent Templates */
 .yaml-recent-templates {
-  margin-bottom: var(--yaml-spacing-lg);
+  margin-bottom: 20px;
 }
 
 .yaml-template-option {
   display: flex;
   align-items: center;
-  gap: var(--yaml-spacing-sm);
+  gap: 8px;
   width: 100%;
-  margin-bottom: var(--yaml-spacing-xs);
-  padding: var(--yaml-spacing-xs);
-  border-radius: var(--yaml-radius-sm);
+  margin-bottom: 4px;
+  padding: 4px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: var(--yaml-transition-fast);
+  transition: all 0.1s ease;
 }
 
 .yaml-template-option:hover {
@@ -508,19 +486,19 @@
 
 /* 5.5. Template Tree */
 .yaml-template-tree {
-  margin: var(--yaml-spacing-md) 0;
+  margin: 12px 0;
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--yaml-radius-sm);
-  padding: var(--yaml-spacing-sm);
+  border-radius: 4px;
+  padding: 8px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .yaml-template-tree-item {
   margin-bottom: 2px;
-  transition: var(--yaml-transition-fast);
+  transition: all 0.1s ease;
 }
 
 .yaml-template-tree-item--file, 
@@ -532,8 +510,8 @@
   display: flex;
   align-items: center;
   padding: 4px 0;
-  border-radius: var(--yaml-radius-sm);
-  transition: var(--yaml-transition-fast);
+  border-radius: 4px;
+  transition: all 0.1s ease;
   cursor: pointer;
 }
 
@@ -542,7 +520,7 @@
 }
 
 .yaml-template-tree-icon {
-  margin-right: var(--yaml-spacing-xs);
+  margin-right: 4px;
 }
 
 .yaml-template-tree-name {
@@ -557,7 +535,7 @@
 
 .yaml-template-tree-children {
   margin-left: 12px;
-  transition: var(--yaml-transition-slow);
+  transition: all 0.2s ease;
 }
 
 .yaml-template-tree-children--collapsed {
@@ -567,28 +545,28 @@
 /* 5.6. Selected Template Info */
 .yaml-selected-template {
   background-color: var(--background-secondary-alt);
-  border-radius: var(--yaml-radius-md);
-  padding: var(--yaml-spacing-md) var(--yaml-spacing-md);
-  margin: var(--yaml-spacing-md) 0 var(--yaml-spacing-xl) 0;
-  font-size: var(--yaml-font-sm);
-  border-left: 3px solid var(--yaml-primary);
-  margin-bottom: var(--yaml-spacing-md);
+  border-radius: 6px;
+  padding: 12px 12px;
+  margin: 12px 0 30px 0;
+  font-size: 0.9em;
+  border-left: 3px solid #9370DB;
+  margin-bottom: 12px;
 }
 
 /* 5.7. Property Selection */
 .yaml-select-all {
   display: flex;
   align-items: center;
-  margin-bottom: var(--yaml-spacing-sm);
+  margin-bottom: 8px;
   width: 100%;
-  margin-right: var(--yaml-spacing-md);
-  padding: var(--yaml-spacing-xs);
+  margin-right: 12px;
+  padding: 4px;
   background-color: var(--background-secondary-alt);
-  border-radius: var(--yaml-radius-sm);
+  border-radius: 4px;
 }
 
 .yaml-select-all__checkbox {
-  margin-right: var(--yaml-spacing-sm);
+  margin-right: 8px;
 }
 
 /* 5.8. Property Item Cells for Templates */
@@ -606,8 +584,8 @@
 
 /* 5.9. Apply Button */
 .yaml-button--apply {
-  background-color: var(--yaml-primary) !important;
-  color: white !important;
+  background-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
 }
 
 /* ===========================================
@@ -616,10 +594,10 @@
 
 /* 6.1. Main Container */
 .yaml-window__batch-selector {
-  padding: var(--yaml-spacing-lg);
+  padding: 20px;
   width: auto;
-  max-width: var(--yaml-window-max-width-small);
-  max-height: var(--yaml-window-max-height);
+  max-width: 600px;
+  max-height: 85vh;
   overflow-y: auto;
   overflow-x: hidden;
   margin: 0 auto;
@@ -627,14 +605,14 @@
 
 /* 6.2. File Tree */
 .yaml-file-tree {
-  margin: var(--yaml-spacing-md) 0;
-  max-height: var(--yaml-container-max-height);
-  min-height: var(--yaml-container-min-height);
+  margin: 12px 0;
+  max-height: 400px;
+  min-height: 300px;
   overflow-y: auto !important;
   overflow-x: hidden;
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--yaml-radius-sm);
-  padding: var(--yaml-spacing-sm);
+  border-radius: 4px;
+  padding: 8px;
   box-sizing: border-box;
   width: 100%;
 }
@@ -646,7 +624,7 @@
 /* 6.3. File & Folder Items */
 .yaml-file-item, 
 .yaml-folder-item {
-  padding: var(--yaml-spacing-xs);
+  padding: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -665,8 +643,8 @@
 
 .yaml-file-icon, 
 .yaml-folder-icon {
-  margin-right: var(--yaml-spacing-xs);
-  color: var(--yaml-folder-icon);
+  margin-right: 4px;
+  color: #E8BA36;
 }
 
 .yaml-file-name, 
@@ -676,7 +654,7 @@
 
 .yaml-file-checkbox, 
 .yaml-folder-checkbox {
-  margin-right: var(--yaml-spacing-sm);
+  margin-right: 8px;
 }
 
 /* 6.4. Folder Children */
@@ -694,10 +672,10 @@
 
 /* 7.1. Main Container */
 .yaml-window__file-selector {
-  padding: var(--yaml-spacing-lg);
+  padding: 20px;
   width: auto;
-  max-width: var(--yaml-window-max-width-small);
-  max-height: var(--yaml-window-max-height);
+  max-width: 600px;
+  max-height: 85vh;
   overflow-y: auto;
   overflow-x: hidden;
   margin: 0 auto;
@@ -709,10 +687,10 @@
 
 /* 8.1. Main Container */
 .yaml-window__bulk-editor {
-  padding: var(--yaml-spacing-lg);
+  padding: 20px;
   width: auto;
-  max-width: var(--yaml-window-max-width-large);
-  max-height: var(--yaml-window-max-height);
+  max-width: 1000px;
+  max-height: 85vh;
   overflow-y: auto !important;
   overflow-x: visible !important;
   margin: 0 auto;
@@ -722,8 +700,8 @@
 .yaml-bulk-container {
   display: flex;
   flex-direction: column;
-  gap: var(--yaml-spacing-lg);
-  margin: var(--yaml-spacing-md) 0;
+  gap: 20px;
+  margin: 12px 0;
   width: 100%;
   box-sizing: border-box;
   overflow-x: visible !important;
@@ -733,24 +711,24 @@
 
 /* 8.3. Section Styles */
 .yaml-section {
-  margin-bottom: var(--yaml-spacing-lg);
+  margin-bottom: 20px;
 }
 
 .yaml-section__content {
-  margin-top: var(--yaml-spacing-sm);
+  margin-top: 8px;
 }
 
 /* 8.4. Property List Container */
 .yaml-property-list__container {
   width: 100%;
-  min-width: var(--yaml-property-item-min-width);
+  min-width: 700px;
   overflow-x: visible;
 }
 
 /* 8.5. Delete List */
 .yaml-delete-list__container {
   width: 100%; 
-  min-width: var(--yaml-property-item-min-width);
+  min-width: 700px;
   overflow-x: visible;
 }
 
@@ -759,7 +737,7 @@
   width: 120px;
   flex-shrink: 0;
   text-align: center;
-  font-size: var(--yaml-font-sm);
+  font-size: 0.9em;
   color: var(--text-muted);
 }
 
@@ -768,27 +746,27 @@
   min-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: var(--yaml-font-sm);
+  font-size: 0.9em;
 }
 
 /* 8.7. Options */
 .yaml-option {
   display: flex;
   align-items: center;
-  gap: var(--yaml-spacing-sm);
-  margin: var(--yaml-spacing-xs) 0;
+  gap: 8px;
+  margin: 4px 0;
 }
 
 .yaml-option__checkbox {
-  margin-right: var(--yaml-spacing-xs);
+  margin-right: 4px;
 }
 
 /* 8.8. Reordering Section */
 .yaml-reorder-list {
-  margin-top: var(--yaml-spacing-sm);
-  margin-bottom: var(--yaml-spacing-sm);
+  margin-top: 8px;
+  margin-bottom: 8px;
   width: 100%;
-  min-width: var(--yaml-property-item-min-width);
+  min-width: 700px;
 }
 
 .yaml-reorder-list--disabled {
@@ -798,13 +776,13 @@
 .yaml-reorder-item {
   display: flex;
   align-items: center;
-  padding: var(--yaml-spacing-sm);
-  margin-bottom: var(--yaml-spacing-xs);
+  padding: 8px;
+  margin-bottom: 4px;
   background-color: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--yaml-radius-sm);
+  border-radius: 4px;
   cursor: move;
-  transition: var(--yaml-transition-slow);
+  transition: all 0.2s ease;
   width: 100%;
   min-width: 650px;
 }
@@ -828,10 +806,10 @@
 }
 
 .yaml-reorder-handle {
-  margin-right: var(--yaml-spacing-sm);
+  margin-right: 8px;
   color: var(--text-muted);
   cursor: grab;
-  font-size: var(--yaml-font-lg);
+  font-size: 1.2em;
 }
 
 .yaml-reorder-handle--disabled {
@@ -850,10 +828,10 @@
 }
 
 .yaml-reorder-usage {
-  font-size: var(--yaml-font-xs);
+  font-size: 0.85em;
   color: var(--text-muted);
   margin-left: auto;
-  padding-right: var(--yaml-spacing-sm);
+  padding-right: 8px;
 }
 
 .yaml-reorder-warning {
@@ -862,7 +840,7 @@
 }
 
 .yaml-button--reorder-apply {
-  margin-top: var(--yaml-spacing-md);
+  margin-top: 12px;
   background-color: var(--interactive-accent) !important;
   color: var(--text-on-accent) !important;
   padding: 6px 12px;
@@ -881,15 +859,33 @@
 
 /* 9.1. Main Container */
 .yaml-settings-tab {
-  padding: 0 var(--yaml-spacing-lg);
+  padding: 0 20px;
+}
+
+.yaml-settings-tab h2 {
+  font-size: var(--h2-size) !important;
+  color: var(--h2-color, var(--text-normal)) !important;
+  font-weight: var(--h2-weight) !important;
+  margin-top: var(--h2-margin-top, 40px) !important;
+  margin-bottom: var(--h2-margin-bottom, 20px) !important;
+  border-bottom: var(--h2-border-bottom, 1px solid var(--background-modifier-border)) !important;
+  padding-bottom: var(--size-4-2, 8px) !important;
+}
+
+.yaml-settings-tab h3 {
+  font-size: var(--h3-size) !important;
+  color: var(--h3-color, var(--text-normal)) !important;
+  font-weight: var(--h3-weight) !important;
+  margin-top: var(--h3-margin-top, 30px) !important;
+  margin-bottom: var(--h3-margin-bottom, 16px) !important;
 }
 
 /* 9.2. Template Paths */
 .yaml-template-paths {
-  margin-bottom: var(--yaml-spacing-lg);
+  margin-bottom: 20px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--yaml-radius-sm);
-  padding: var(--yaml-spacing-sm);
+  border-radius: 4px;
+  padding: 8px;
   max-height: 300px;
   overflow-y: auto;
 }
@@ -908,8 +904,8 @@
   display: flex;
   align-items: center;
   padding: 4px 0;
-  border-radius: var(--yaml-radius-sm);
-  transition: var(--yaml-transition-fast);
+  border-radius: 4px;
+  transition: all 0.1s ease;
 }
 
 .yaml-template-node__header:hover {
@@ -921,25 +917,26 @@
 }
 
 .yaml-template-node__icon {
-  margin-right: var(--yaml-spacing-xs);
+  margin-right: 4px;
 }
 
 .yaml-template-node__name {
   flex: 1;
 }
 
-.yaml-template-node__remove {
-  background-color: transparent !important;
-  border: none !important;
-  color: var(--text-muted) !important;
-  min-width: auto !important;
-  padding: 2px var(--yaml-spacing-sm) !important;
-  margin: 0 !important;
+.yaml-template-node__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-left: 8px;
 }
 
-.yaml-template-node__remove:hover {
-  color: var(--text-error) !important;
-  background-color: transparent !important;
+/* Make sure button has appropriate sizing */
+.yaml-template-node__actions button {
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  min-width: auto !important;
+  height: auto !important;
 }
 
 .yaml-template-node__children {
@@ -950,12 +947,6 @@
   display: none;
 }
 
-/* 9.4. Settings Buttons */
-.yaml-button--add-templates {
-  margin-bottom: var(--yaml-spacing-lg);
-  margin-top: var(--yaml-spacing-sm);
-}
-
 /* ===========================================
    10. RESPONSIVE STYLES
    =========================================== */
@@ -963,7 +954,7 @@
 @media screen and (max-width: 768px) {
   .yaml-window {
     width: 95%;
-    padding: var(--yaml-spacing-md);
+    padding: 12px;
     min-width: auto;
   }
 
@@ -993,7 +984,7 @@
   .yaml-new-property__type, 
   .yaml-new-property__value {
     width: 100%;
-    margin-bottom: var(--yaml-spacing-xs);
+    margin-bottom: 4px;
   }
 }
 
@@ -1001,6 +992,6 @@
   .yaml-window__property-manager {
     min-width: auto;
     width: 95%;
-    padding: var(--yaml-spacing-md);
+    padding: 12px;
   }
 }

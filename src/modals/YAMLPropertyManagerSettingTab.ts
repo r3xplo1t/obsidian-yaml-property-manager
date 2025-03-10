@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, TFile, TFolder, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, TFile, TFolder, Notice, ButtonComponent } from 'obsidian';
 import YAMLPropertyManagerPlugin from '../../main';
 import { TemplateFileSelectorModal } from './TemplateFileSelectorModal';
 import { TreeNode } from '../models/interfaces';
@@ -9,6 +9,53 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
     constructor(app: App, plugin: YAMLPropertyManagerPlugin) {
         super(app, plugin);
         this.plugin = plugin;
+    }
+
+    private expandedPaths: Set<string> = new Set();
+
+    private async removeTemplateWithScrollPreservation(templatePathIndex: number | undefined, node: TreeNode): Promise<void> {
+        // Find the template paths container
+        const templatePathsContainer = document.querySelector('.yaml-template-paths');
+        let scrollTop = 0;
+        
+        // Save scroll position if container exists
+        if (templatePathsContainer) {
+            scrollTop = templatePathsContainer.scrollTop;
+        }
+        
+        if (templatePathIndex !== undefined) {
+            // Direct template path
+            this.plugin.settings.templatePaths.splice(templatePathIndex, 1);
+        } else {
+            // Find all child templates
+            const pathPrefix = node.path + '/';
+            const indicesToRemove: number[] = [];
+            
+            this.plugin.settings.templatePaths.forEach((tp, index) => {
+                if (tp.path === node.path || tp.path.startsWith(pathPrefix)) {
+                    indicesToRemove.push(index);
+                }
+            });
+            
+            // Remove in reverse order
+            for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+                this.plugin.settings.templatePaths.splice(indicesToRemove[i], 1);
+            }
+        }
+        
+        // Save settings
+        await this.plugin.saveSettings();
+        
+        // Refresh display
+        this.display();
+        
+        // Restore scroll position after a small delay to ensure DOM is updated
+        setTimeout(() => {
+            const newTemplatePathsContainer = document.querySelector('.yaml-template-paths');
+            if (newTemplatePathsContainer) {
+                newTemplatePathsContainer.scrollTop = scrollTop;
+            }
+        }, 10);
     }
 
     display(): void {
@@ -36,61 +83,63 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
             this.renderTemplatePathsHierarchy(templatePathsContainer);
         }
         
-        // Single button to add templates
-        const addTemplatesButton = containerEl.createEl('button', { 
-            text: 'Browse and Select Templates',
-            cls: 'yaml-button yaml-button--add-templates'
-        });
-        
-        addTemplatesButton.addEventListener('click', () => {
-            new TemplateFileSelectorModal(this.app, async (result) => {
-                // Process selected files and folders
-                let countAdded = 0;
-                
-                // Add individual files
-                for (const file of result.files) {
-                    // Check if already exists
-                    const alreadyExists = this.plugin.settings.templatePaths.some(
-                        tp => tp.type === 'file' && tp.path === file.path
-                    );
-                    
-                    if (!alreadyExists) {
-                        this.plugin.settings.templatePaths.push({
-                            type: 'file',
-                            path: file.path,
-                            includeSubdirectories: true // Always include subdirectories
-                        });
-                        countAdded++;
-                    }
-                }
-                
-                // Add folders
-                for (const folder of result.folders) {
-                    // Check if already exists
-                    const alreadyExists = this.plugin.settings.templatePaths.some(
-                        tp => tp.type === 'directory' && tp.path === folder.path
-                    );
-                    
-                    if (!alreadyExists) {
-                        this.plugin.settings.templatePaths.push({
-                            type: 'directory',
-                            path: folder.path,
-                            includeSubdirectories: true // Always include subdirectories
-                        });
-                        countAdded++;
-                    }
-                }
-                
-                // Save settings and refresh
-                if (countAdded > 0) {
-                    await this.plugin.saveSettings();
-                    new Notice(`Added ${countAdded} template source${countAdded !== 1 ? 's' : ''}`);
-                    this.display(); // Refresh view
-                } else if (result.files.length > 0 || result.folders.length > 0) {
-                    new Notice('All selected templates were already in your list');
-                }
-            }).open();
-        });
+        // Single button to add templates - using Obsidian's native Setting API
+        const templateButtonSetting = new Setting(containerEl)
+            .setName('Template Selection')
+            .setDesc('Browse and select template files or folders to use with YAML Property Manager')
+            .addButton(button => button
+                .setButtonText('Browse and Select Templates')
+                .setCta() // This applies Obsidian's call-to-action styling
+                .onClick(() => {
+                    new TemplateFileSelectorModal(this.app, async (result) => {
+                        // Process selected files and folders
+                        let countAdded = 0;
+                        
+                        // Add individual files
+                        for (const file of result.files) {
+                            // Check if already exists
+                            const alreadyExists = this.plugin.settings.templatePaths.some(
+                                tp => tp.type === 'file' && tp.path === file.path
+                            );
+                            
+                            if (!alreadyExists) {
+                                this.plugin.settings.templatePaths.push({
+                                    type: 'file',
+                                    path: file.path,
+                                    includeSubdirectories: true // Always include subdirectories
+                                });
+                                countAdded++;
+                            }
+                        }
+                        
+                        // Add folders
+                        for (const folder of result.folders) {
+                            // Check if already exists
+                            const alreadyExists = this.plugin.settings.templatePaths.some(
+                                tp => tp.type === 'directory' && tp.path === folder.path
+                            );
+                            
+                            if (!alreadyExists) {
+                                this.plugin.settings.templatePaths.push({
+                                    type: 'directory',
+                                    path: folder.path,
+                                    includeSubdirectories: true // Always include subdirectories
+                                });
+                                countAdded++;
+                            }
+                        }
+                        
+                        // Save settings and refresh
+                        if (countAdded > 0) {
+                            await this.plugin.saveSettings();
+                            new Notice(`Added ${countAdded} template source${countAdded !== 1 ? 's' : ''}`);
+                            this.display(); // Refresh view
+                        } else if (result.files.length > 0 || result.folders.length > 0) {
+                            new Notice('All selected templates were already in your list');
+                        }
+                    }).open();
+                })
+            );
         
         // Max recent templates
         new Setting(containerEl)
@@ -244,57 +293,64 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
                 cls: 'yaml-template-node__name'
             });
             
-            // Add remove button with new class
-            const removeBtn = headerEl.createEl('button', {
-                text: 'Remove',
-                cls: 'yaml-template-node__remove'
+            // Create a span to hold the button
+            const btnContainer = headerEl.createSpan({
+                cls: 'yaml-template-node__actions'
             });
-            
-            // Handle remove button click
-            removeBtn.addEventListener('click', async (e) => {
-                e.stopPropagation(); // Prevent expanding/collapsing
-                
-                if (node.templatePathIndex !== undefined) {
-                    // Direct template path
-                    this.plugin.settings.templatePaths.splice(node.templatePathIndex, 1);
-                } else {
-                    // Find all child templates
-                    const pathPrefix = node.path + '/';
-                    const indicesToRemove: number[] = [];
-                    
-                    this.plugin.settings.templatePaths.forEach((tp, index) => {
-                        if (tp.path === node.path || tp.path.startsWith(pathPrefix)) {
-                            indicesToRemove.push(index);
-                        }
-                    });
-                    
-                    // Remove in reverse order
-                    for (let i = indicesToRemove.length - 1; i >= 0; i--) {
-                        this.plugin.settings.templatePaths.splice(indicesToRemove[i], 1);
+        
+            // Keep track of button clicks to prevent accidental double processing
+            let processingClick = false;
+        
+            // Create Obsidian's native button with improved event handling
+            new ButtonComponent(btnContainer)
+                .setButtonText('Remove')
+                .setTooltip('Remove this template')
+                .onClick(async (e) => {
+                    // Add additional measures to ensure the event is fully captured and not propagated
+                    e.stopPropagation();
+                    e.preventDefault();
+        
+                    // Prevent double-processing if already handling a click
+                    if (processingClick) return;
+                    processingClick = true;
+        
+                    try {
+                        await this.removeTemplateWithScrollPreservation(node.templatePathIndex, node);
+                    } finally {
+                        processingClick = false;
                     }
-                }
-                
-                await this.plugin.saveSettings();
-                this.display(); // Refresh the entire display
-            });
+                });
             
             // If this is a directory node, add children container
             if (node.isDirectory && node.children.length > 0) {
-                // Create children container (initially collapsed) with new class
+                // Create children container (initially collapsed with class)
                 const childrenEl = nodeEl.createDiv({
                     cls: 'yaml-template-node__children yaml-template-node__children--collapsed',
                     attr: { 'id': childrenId }
                 });
                 
+                // Check if this node path is in our expanded paths set
+                if (this.expandedPaths.has(node.path)) {
+                    childrenEl.removeClass('yaml-template-node__children--collapsed');
+                    iconEl.textContent = '📂 '; // Show as expanded
+                }
+                
                 // Add expand/collapse handler to the header
                 headerEl.addEventListener('click', (e) => {
-                    // Only toggle if not clicking the remove button
-                    if (!(e.target instanceof HTMLButtonElement)) {
+                    // Only toggle if not clicking a button or inside the button container
+                    if (!(e.target instanceof HTMLElement) || !e.target.closest('.yaml-template-node__actions')) {
                         const isCollapsed = childrenEl.hasClass('yaml-template-node__children--collapsed');
                         childrenEl.toggleClass('yaml-template-node__children--collapsed', !isCollapsed);
                         
                         // Update icon
                         iconEl.textContent = childrenEl.hasClass('yaml-template-node__children--collapsed') ? '📁 ' : '📂 ';
+                        
+                        // Update our expanded paths tracking
+                        if (childrenEl.hasClass('yaml-template-node__children--collapsed')) {
+                            this.expandedPaths.delete(node.path);
+                        } else {
+                            this.expandedPaths.add(node.path);
+                        }
                     }
                 });
                 
