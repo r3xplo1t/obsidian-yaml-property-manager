@@ -20,23 +20,6 @@ export class BatchFileSelectorModal extends Modal {
         // Add header with back button
         const headerContainer = contentEl.createDiv({ cls: 'yaml-header' });
         
-        const backButton = headerContainer.createEl('button', { 
-            text: '← Back',
-            cls: 'yaml-button yaml-header__back-button'
-        });
-        
-        backButton.addEventListener('click', () => {
-            // We need special handling for this modal since it uses a callback
-            backButton.disabled = true; // Prevent multiple clicks
-            this.close();
-            
-            // Get the plugin instance properly
-            const plugin = (this.app as any).plugins.plugins["yaml-property-manager"];
-            if (plugin) {
-                plugin.navigateToModal(this, 'main');
-            }
-        });
-        
         headerContainer.createEl('h2', { text: 'Select Files', cls: 'yaml-header__title' });
         
         // Instructions
@@ -111,102 +94,229 @@ export class BatchFileSelectorModal extends Modal {
         
         for (const child of sorted) {
             const isFolder = child.children !== undefined;
+            const isMarkdownFile = !isFolder && child instanceof TFile && child.extension === 'md';
             
+            // Create main container
             const itemEl = parentEl.createDiv({
                 cls: isFolder ? 'yaml-folder-item' : 'yaml-file-item'
             });
+
+            // Store path data attribute on the item itself
+            itemEl.setAttribute('data-path', child.path);
             
-            // Use inline style only for indentation levels
-            itemEl.style.paddingLeft = `${level * 20}px`;
+            // Create header row (contains checkbox, icon, name)
+            const headerEl = itemEl.createEl('div', {
+                cls: 'yaml-file-tree-header'
+            });
             
-            // Checkbox
-            const checkbox = itemEl.createEl('input', {
-                type: 'checkbox',
-                cls: isFolder ? 'yaml-folder-checkbox' : 'yaml-file-checkbox'
+            // Custom checkbox container
+            const checkboxContainer = headerEl.createEl('div', {
+                cls: 'yaml-custom-checkbox-container'
+            });
+            
+            // Custom checkbox element
+            const checkbox = checkboxContainer.createEl('div', {
+                cls: `yaml-custom-checkbox${!isMarkdownFile && !isFolder ? ' yaml-custom-checkbox--disabled' : ''}`
+            });
+
+            // Store path data attribute on the checkbox too
+            checkbox.setAttribute('data-path', child.path);
+            
+            // Checkmark that appears when checked
+            const checkmark = checkbox.createEl('div', {
+                cls: 'yaml-checkbox-checkmark'
             });
             
             // Icon
-            const folderIcon = itemEl.createEl('span', { 
+            const icon = headerEl.createEl('span', { 
                 text: isFolder ? '📁 ' : '📄 ',
                 cls: isFolder ? 'yaml-folder-icon' : 'yaml-file-icon'
             });
             
             // Name
-            itemEl.createEl('span', { 
+            headerEl.createEl('span', { 
                 text: child.name, 
                 cls: isFolder ? 'yaml-folder-name' : 'yaml-file-name' 
             });
             
+            // Create container for children if it's a folder
+            let childrenContainer: HTMLElement | null = null;
             if (isFolder) {
-                // Create container for children
-                const childrenContainer = itemEl.createDiv({ 
+                childrenContainer = itemEl.createDiv({ 
                     cls: 'yaml-folder-children yaml-folder-children--collapsed'
                 });
+            }
+
+            // Store the folder path on the children container too
+            if (childrenContainer) {
+                childrenContainer.setAttribute('data-parent-path', child.path);
+            }
+            
+            // Shared selection logic for both folders and files
+            const selectItem = (selected: boolean) => {
+                if (selected) {
+                    checkbox.classList.add('is-checked');
+                    checkmark.classList.add('yaml-checkbox-checkmark--visible');
+                } else {
+                    checkbox.classList.remove('is-checked');
+                    checkmark.classList.remove('yaml-checkbox-checkmark--visible');
+                }
                 
-                // Toggle expand/collapse
-                itemEl.addEventListener('click', (e) => {
-                    if (e.target === checkbox) return;
-                    e.stopPropagation();
+                if (isFolder) {
+                    // Recursively select/deselect all markdown files in the folder
+                    const markdownFiles = this.getMarkdownFilesInFolder(child);
                     
-                    const isCollapsed = childrenContainer.hasClass('yaml-folder-children--collapsed');
-                    childrenContainer.toggleClass('yaml-folder-children--collapsed', !isCollapsed);
-                    folderIcon.textContent = childrenContainer.hasClass('yaml-folder-children--collapsed') ? '📁 ' : '📂 ';
-                    
-                    // Load children if not yet loaded
-                    if (!childrenContainer.hasClass('yaml-folder-children--collapsed') && childrenContainer.childElementCount === 0) {
-                        this.addFolderToTree(childrenContainer, child, selectedCountEl, level + 1);
-                    }
-                });
-                
-                // Handle checkbox for folders
-                checkbox.addEventListener('change', () => {
-                    const isChecked = checkbox.checked;
-                    
-                    // If folder is checked, recursively select all markdown files in it
-                    if (isChecked) {
-                        const markdownFiles = this.getMarkdownFilesInFolder(child);
-                        for (const file of markdownFiles) {
+                    if (selected) {
+                        // Add files not already selected
+                        markdownFiles.forEach(file => {
                             if (!this.selectedFiles.includes(file)) {
                                 this.selectedFiles.push(file);
                             }
-                        }
+                        });
                     } else {
-                        // If unchecked, remove all files from this folder
+                        // Remove files in this folder
                         const folderPath = child.path;
-                        this.selectedFiles = this.selectedFiles.filter(file => {
-                            return !file.path.startsWith(folderPath + '/');
-                        });
+                        this.selectedFiles = this.selectedFiles.filter(file => 
+                            !file.path.startsWith(folderPath + '/')
+                        );
                     }
                     
-                    // Update checkboxes in the expanded view if visible
-                    if (!childrenContainer.hasClass('yaml-folder-children--collapsed')) {
-                        const checkboxes = childrenContainer.querySelectorAll('input[type="checkbox"]');
-                        checkboxes.forEach((cb: HTMLInputElement) => {
-                            cb.checked = isChecked;
-                        });
-                    }
-                    
-                    // Update count and button
-                    this.updateSelectedCount(selectedCountEl);
-                });
-            } else if (child instanceof TFile && child.extension === 'md') {
-                // Handle checkbox for individual files
-                checkbox.addEventListener('change', () => {
-                    if (checkbox.checked) {
+                    // Update all child checkboxes (even if not expanded)
+                    this.updateChildCheckboxes(child, selected);
+                } else if (isMarkdownFile) {
+                    // For individual markdown files
+                    if (selected) {
                         if (!this.selectedFiles.includes(child)) {
                             this.selectedFiles.push(child);
                         }
                     } else {
                         this.selectedFiles = this.selectedFiles.filter(f => f !== child);
                     }
+                }
+                
+                // Update count and button
+                this.updateSelectedCount(selectedCountEl);
+            };
+            
+            if (isFolder) {
+                // Toggle expand/collapse when clicking on the header (but not checkbox)
+                headerEl.addEventListener('click', (e) => {
+                    // Don't trigger if clicked on checkbox
+                    if (e.target === checkbox || e.target === checkmark || checkboxContainer.contains(e.target as Node)) return;
+                    e.stopPropagation();
                     
-                    // Update count and button
-                    this.updateSelectedCount(selectedCountEl);
+                    if (childrenContainer) {
+                        const isCollapsed = childrenContainer.classList.contains('yaml-folder-children--collapsed');
+                        const isChecked = checkbox.classList.contains('is-checked');
+                        
+                        if (isCollapsed) {
+                            // Expanding the folder
+                            childrenContainer.classList.remove('yaml-folder-children--collapsed');
+                            icon.textContent = '📂 '; // Open folder icon
+                            
+                            // Load children if not yet loaded
+                            if (childrenContainer.childElementCount === 0) {
+                                this.addFolderToTree(childrenContainer, child, selectedCountEl, level + 1);
+                            }
+                            
+                            // Use setTimeout to ensure DOM is fully updated before we check children
+                            setTimeout(() => {
+                                // If this folder is checked, manually check all visible child checkboxes
+                                if (isChecked) {
+                                    const allChildCheckboxes = childrenContainer.querySelectorAll('.yaml-custom-checkbox');
+                                    allChildCheckboxes.forEach(childCheckbox => {
+                                        childCheckbox.classList.add('is-checked');
+                                        const childCheckmark = childCheckbox.querySelector('.yaml-checkbox-checkmark');
+                                        if (childCheckmark) {
+                                            childCheckmark.classList.add('yaml-checkbox-checkmark--visible');
+                                        }
+                                    });
+                                }
+                                this.syncCheckboxesWithSelection(childrenContainer);
+                            }, 0);
+                        } else {
+                            // Collapsing the folder
+                            childrenContainer.classList.add('yaml-folder-children--collapsed');
+                            icon.textContent = '📁 '; // Closed folder icon
+                        }
+                    }
+                });
+                
+                // Custom checkbox click handler for folders
+                checkbox.addEventListener('click', (e: MouseEvent) => {
+                    e.stopPropagation(); // Prevent parent click
+                    
+                    const isChecked = checkbox.classList.contains('is-checked');
+                    selectItem(!isChecked);
+                    
+                    // If the folder is expanded and we're checking it, also update visible child checkboxes
+                    if (!isChecked && childrenContainer && !childrenContainer.classList.contains('yaml-folder-children--collapsed')) {
+                        const allChildCheckboxes = childrenContainer.querySelectorAll('.yaml-custom-checkbox');
+                        allChildCheckboxes.forEach(childCheckbox => {
+                            childCheckbox.classList.add('is-checked');
+                            const childCheckmark = childCheckbox.querySelector('.yaml-checkbox-checkmark');
+                            if (childCheckmark) {
+                                childCheckmark.classList.add('yaml-checkbox-checkmark--visible');
+                            }
+                        });
+                    }
+                    // If the folder is expanded and we're unchecking it, also update visible child checkboxes
+                    else if (isChecked && childrenContainer && !childrenContainer.classList.contains('yaml-folder-children--collapsed')) {
+                        const allChildCheckboxes = childrenContainer.querySelectorAll('.yaml-custom-checkbox');
+                        allChildCheckboxes.forEach(childCheckbox => {
+                            childCheckbox.classList.remove('is-checked');
+                            const childCheckmark = childCheckbox.querySelector('.yaml-checkbox-checkmark');
+                            if (childCheckmark) {
+                                childCheckmark.classList.remove('yaml-checkbox-checkmark--visible');
+                            }
+                        });
+                    }
+                });
+            } else if (isMarkdownFile) {
+                // Custom checkbox click handler for markdown files
+                checkbox.addEventListener('click', (e: MouseEvent) => {
+                    e.stopPropagation(); // Prevent parent click
+                    
+                    const isChecked = checkbox.classList.contains('is-checked');
+                    selectItem(!isChecked);
                 });
             } else {
                 // Non-markdown files are disabled
-                checkbox.disabled = true;
-                itemEl.addClass('yaml-file-item--disabled');
+                checkbox.classList.add('yaml-custom-checkbox--disabled');
+                itemEl.classList.add('yaml-file-item--disabled');
+            }
+        }
+    }
+    
+    // New method to update child checkboxes recursively
+    updateChildCheckboxes(folder: any, selected: boolean) {
+        if (!folder.children) return;
+        
+        for (const child of folder.children) {
+            const isMarkdownFile = child instanceof TFile && child.extension === 'md';
+            const isFolder = child.children !== undefined;
+            
+            // Find all elements with this path (there may be multiple due to our enhanced data attributes)
+            const elements = this.contentEl.querySelectorAll(`[data-path="${child.path}"]`);
+            
+            elements.forEach(el => {
+                // If this is a checkbox, update its state
+                if (el.classList.contains('yaml-custom-checkbox') && (isMarkdownFile || isFolder)) {
+                    const checkmark = el.querySelector('.yaml-checkbox-checkmark');
+                    
+                    if (selected) {
+                        el.classList.add('is-checked');
+                        if (checkmark) checkmark.classList.add('yaml-checkbox-checkmark--visible');
+                    } else {
+                        el.classList.remove('is-checked');
+                        if (checkmark) checkmark.classList.remove('yaml-checkbox-checkmark--visible');
+                    }
+                }
+            });
+            
+            // Recursively update child folders
+            if (isFolder) {
+                this.updateChildCheckboxes(child, selected);
             }
         }
     }
@@ -240,13 +350,78 @@ export class BatchFileSelectorModal extends Modal {
         const confirmButton = this.contentEl.querySelector('.yaml-button--confirm') as HTMLButtonElement;
         if (confirmButton) {
             confirmButton.disabled = count === 0;
-            
             if (count === 0) {
-                confirmButton.addClass('yaml-button--disabled');
+                confirmButton.classList.add('yaml-button--disabled');
             } else {
-                confirmButton.removeClass('yaml-button--disabled');
+                confirmButton.classList.remove('yaml-button--disabled');
             }
         }
+    }
+
+    // Synchronize checkboxes with the actual selection state
+    syncCheckboxesWithSelection(container: HTMLElement) {
+    // Process all file checkboxes
+    const fileCheckboxes = container.querySelectorAll('.yaml-file-item .yaml-custom-checkbox');
+    fileCheckboxes.forEach(checkbox => {
+        // Find the associated file path
+        const fileNameEl = checkbox.closest('.yaml-file-tree-header')?.querySelector('.yaml-file-name');
+        const filePath = fileNameEl?.getAttribute('data-path');
+        
+        if (filePath) {
+            // Check if this file is in the selected files array
+            const isSelected = this.selectedFiles.some(file => file.path === filePath);
+            
+            // Update checkbox state
+            if (isSelected) {
+                checkbox.classList.add('is-checked');
+                const checkmark = checkbox.querySelector('.yaml-checkbox-checkmark');
+                if (checkmark) checkmark.classList.add('yaml-checkbox-checkmark--visible');
+            } else {
+                checkbox.classList.remove('is-checked');
+                const checkmark = checkbox.querySelector('.yaml-checkbox-checkmark');
+                if (checkmark) checkmark.classList.remove('yaml-checkbox-checkmark--visible');
+            }
+        }
+    });
+
+    // Process all folder checkboxes
+    const folderCheckboxes = container.querySelectorAll('.yaml-folder-item > .yaml-file-tree-header > .yaml-custom-checkbox-container > .yaml-custom-checkbox');
+    folderCheckboxes.forEach(checkbox => {
+        // Find the folder path
+        const folderNameEl = checkbox.closest('.yaml-file-tree-header')?.querySelector('.yaml-folder-name');
+        const folderPath = folderNameEl?.getAttribute('data-path');
+        
+        if (folderPath) {
+            // A folder is "selected" if ALL files within it are selected
+            const folderFiles = this.getMarkdownFilesInFolder({path: folderPath, children: this.getFolderByPath(folderPath)?.children});
+            const allFilesSelected = folderFiles.length > 0 && folderFiles.every(file => 
+                this.selectedFiles.some(selectedFile => selectedFile.path === file.path)
+            );
+            
+            // Update checkbox state
+            if (allFilesSelected) {
+                checkbox.classList.add('is-checked');
+                const checkmark = checkbox.querySelector('.yaml-checkbox-checkmark');
+                if (checkmark) checkmark.classList.add('yaml-checkbox-checkmark--visible');
+            } else {
+                checkbox.classList.remove('is-checked');
+                const checkmark = checkbox.querySelector('.yaml-checkbox-checkmark');
+                if (checkmark) checkmark.classList.remove('yaml-checkbox-checkmark--visible');
+            }
+        }
+    });
+    }
+
+    // Helper to get a folder by path
+    getFolderByPath(path: string): TFolder | null {
+    // Root folder case
+    if (path === '/') return this.app.vault.getRoot();
+
+    // Try to get the folder directly
+    const folder = this.app.vault.getAbstractFileByPath(path);
+    if (folder instanceof TFolder) return folder;
+
+    return null;
     }
     
     onClose() {

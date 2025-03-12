@@ -91,55 +91,76 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
                 .setButtonText('Browse and Select Templates')
                 .setCta() // This applies Obsidian's call-to-action styling
                 .onClick(() => {
-                    new TemplateFileSelectorModal(this.app, async (result) => {
-                        // Process selected files and folders
-                        let countAdded = 0;
-                        
-                        // Add individual files
-                        for (const file of result.files) {
-                            // Check if already exists
-                            const alreadyExists = this.plugin.settings.templatePaths.some(
-                                tp => tp.type === 'file' && tp.path === file.path
-                            );
+                    new TemplateFileSelectorModal(
+                        this.app, 
+                        async (result) => {
+                            // Process selected files and folders
+                            let countAdded = 0;
                             
-                            if (!alreadyExists) {
-                                this.plugin.settings.templatePaths.push({
-                                    type: 'file',
-                                    path: file.path,
-                                    includeSubdirectories: true // Always include subdirectories
-                                });
-                                countAdded++;
-                            }
-                        }
-                        
-                        // Add folders
-                        for (const folder of result.folders) {
-                            // Check if already exists
-                            const alreadyExists = this.plugin.settings.templatePaths.some(
-                                tp => tp.type === 'directory' && tp.path === folder.path
-                            );
-                            
-                            if (!alreadyExists) {
-                                this.plugin.settings.templatePaths.push({
-                                    type: 'directory',
-                                    path: folder.path,
-                                    includeSubdirectories: true // Always include subdirectories
-                                });
-                                countAdded++;
-                            }
-                        }
-                        
-                        // Save settings and refresh
-                        if (countAdded > 0) {
-                            await this.plugin.saveSettings();
-                            new Notice(`Added ${countAdded} template source${countAdded !== 1 ? 's' : ''}`);
-                            this.display(); // Refresh view
-                        } else if (result.files.length > 0 || result.folders.length > 0) {
-                            new Notice('All selected templates were already in your list');
-                        }
-                    }).open();
-                })
-            );
+                            // Debug logging
+                console.log('Processing selection result:');
+                console.log('- Files:', result.files.map(f => f.path));
+                console.log('- Folders:', result.folders.map(f => f.path));
+                
+                // Add individual files
+                for (const file of result.files) {
+                    // Check if already exists
+                    const alreadyExists = this.plugin.settings.templatePaths.some(
+                        tp => tp.type === 'file' && tp.path === file.path
+                    );
+                    
+                    if (!alreadyExists) {
+                        this.plugin.settings.templatePaths.push({
+                            type: 'file',
+                            path: file.path,
+                            includeSubdirectories: true // Always include subdirectories
+                        });
+                        countAdded++;
+                        console.log(`Added file to template paths: ${file.path}`);
+                    } else {
+                        console.log(`File already exists in template paths: ${file.path}`);
+                    }
+                }
+                
+                // Add folders
+                for (const folder of result.folders) {
+                    // Check if already exists
+                    const alreadyExists = this.plugin.settings.templatePaths.some(
+                        tp => tp.type === 'directory' && tp.path === folder.path
+                    );
+                    
+                    if (!alreadyExists) {
+                        this.plugin.settings.templatePaths.push({
+                            type: 'directory',
+                            path: folder.path,
+                            includeSubdirectories: true // Always include subdirectories
+                        });
+                        countAdded++;
+                        console.log(`Added folder to template paths: ${folder.path}`);
+                    } else {
+                        console.log(`Folder already exists in template paths: ${folder.path}`);
+                    }
+                }
+                
+                // Save settings and refresh
+                if (countAdded > 0) {
+                    await this.plugin.saveSettings();
+                    new Notice(`Added ${countAdded} template source${countAdded !== 1 ? 's' : ''}`);
+                    this.display(); // Refresh view
+                } else if (result.files.length > 0 || result.folders.length > 0) {
+                    new Notice('All selected templates were already in your list');
+                }
+                
+                // Debug current template paths after update
+                console.log('Current template paths:');
+                this.plugin.settings.templatePaths.forEach((path, index) => {
+                    console.log(`${index}: ${path.type} - ${path.path}`);
+                });
+            },
+            this.plugin.settings.templatePaths // Pass existing template paths
+        ).open();
+    })
+);
         
         // Max recent templates
         new Setting(containerEl)
@@ -177,6 +198,9 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
         // Clear the container first
         container.empty();
         
+        console.log('Rendering template paths hierarchy:');
+        console.log('Template paths in settings:', this.plugin.settings.templatePaths);
+        
         // First, build a hierarchical tree structure
         const rootNode: TreeNode = {
             name: this.app.vault.getName(),
@@ -184,6 +208,14 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
             isDirectory: true,
             children: []
         };
+        
+        // Add debug code - List all top-level paths
+        console.log("Top-level template paths:");
+        this.plugin.settings.templatePaths.forEach(tp => {
+            if (!tp.path.includes('/')) {
+                console.log(`  Top-level path: ${tp.type} - ${tp.path}`);
+            }
+        });
         
         // Helper to find or create a node for a path
         const getNodeForPath = (path: string, isDirectory: boolean): TreeNode => {
@@ -254,11 +286,12 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
         // Simple recursive render function that uses data attributes for connections
         const renderNode = (node: TreeNode, parentEl: HTMLElement, level: number = 0) => {
             if (node === rootNode) {
-                // Root node - just render children directly
+                // Root node - render each child directly
+                console.log("Rendering root node children:", node.children.map(c => c.path));
+                
                 for (const child of node.children) {
-                    if (child.name !== "Obsidian") { // Skip the Obsidian node
-                        renderNode(child, parentEl, level);
-                    }
+                    // Render all child nodes without exception
+                    renderNode(child, parentEl, level);
                 }
                 return;
             }
@@ -267,13 +300,13 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
             const nodeId = `template-node-${nodeCounter++}`;
             const childrenId = `children-${nodeId}`;
             
-            // Create node container with new class
+            // Create node container with class
             const nodeEl = parentEl.createDiv({ 
                 cls: 'yaml-template-node',
                 attr: { 'data-node-id': nodeId }
             });
             
-            // Create the header with new class
+            // Create the header with class
             const headerEl = nodeEl.createDiv({
                 cls: node.isDirectory 
                     ? 'yaml-template-node__header yaml-template-node__header--folder' 
@@ -283,11 +316,11 @@ export class YAMLPropertyManagerSettingTab extends PluginSettingTab {
             // Use inline style only for indentation level
             headerEl.style.paddingLeft = `${level * 20}px`;
             
-            // Add folder/file icon with new class
+            // Add folder/file icon with class
             const iconEl = headerEl.createSpan({ cls: 'yaml-template-node__icon' });
             iconEl.textContent = node.isDirectory ? '📁 ' : '📄 ';
             
-            // Add name with new class
+            // Add name with class
             const nameEl = headerEl.createSpan({
                 text: node.name,
                 cls: 'yaml-template-node__name'
