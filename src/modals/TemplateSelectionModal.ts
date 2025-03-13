@@ -8,9 +8,8 @@ export class TemplateSelectionModal extends Modal {
     targetFiles: TFile[];
     selectedTemplate: TFile | null = null;
     selectedProperties: string[] = [];
-    preservePropertyValues: string[] = []; // Track which property values to preserve
-    preserveAllValues: boolean = false; // Track the state of the "preserve all" toggle
-    overrideAllValues: boolean = false; // Track the state of the "override all" toggle
+    overrideValueProperties: string[] = []; // Changed from preservePropertyValues
+    overrideAllValues: boolean = false; // Changed from preserveAllValues
     templateTree: TemplateNode = { type: 'folder', name: 'Root', path: '', children: [] };
     allTemplates: TFile[] = [];
     searchResults: TFile[] = [];
@@ -109,14 +108,10 @@ export class TemplateSelectionModal extends Modal {
             text: 'Select Properties to Apply',
             cls: 'yaml-properties-section-header yaml-element--hidden'
         });
-        // 2. Create selected template info container (initially hidden)
-        const selectedTemplateInfo = contentEl.createDiv({ 
-            cls: 'yaml-selected-template yaml-element--hidden',
-            attr: { id: 'template-info-container' }
-        });
+        
         // 3. Create "Select All Properties" checkbox container (initially hidden)
         const selectAllContainer = contentEl.createDiv({ 
-            cls: 'yaml-select-all yaml-element--hidden',
+            cls: 'yaml-select-all yaml-select-all--primary yaml-element--hidden',
             attr: { id: 'select-all-container' }
         });
         const selectAllCheckbox = selectAllContainer.createEl('input', {
@@ -130,25 +125,9 @@ export class TemplateSelectionModal extends Modal {
             attr: { for: 'select-all-properties' }
         });
 
-        // 4. Create "Preserve All Property Values" checkbox container (initially hidden)
-        const preserveAllContainer = contentEl.createDiv({ 
-            cls: 'yaml-select-all yaml-element--hidden',
-            attr: { id: 'preserve-all-container' }
-        });
-        const preserveAllCheckbox = preserveAllContainer.createEl('input', {
-            type: 'checkbox',
-            attr: { id: 'preserve-all-values' },
-            cls: 'yaml-select-all__checkbox'
-        });
-
-        preserveAllContainer.createEl('label', {
-            text: 'Preserve All Property Values (use existing values when present)',
-            attr: { for: 'preserve-all-values' }
-        });
-
-        // 5. Create "Override All Property Values" checkbox container (initially hidden)
+        // 4. Create "Override All Values" checkbox container (initially hidden)
         const overrideAllContainer = contentEl.createDiv({ 
-            cls: 'yaml-select-all yaml-element--hidden',
+            cls: 'yaml-select-all yaml-select-all--secondary yaml-element--hidden yaml-select-all--disabled',
             attr: { id: 'override-all-container' }
         });
         const overrideAllCheckbox = overrideAllContainer.createEl('input', {
@@ -158,55 +137,33 @@ export class TemplateSelectionModal extends Modal {
         });
 
         overrideAllContainer.createEl('label', {
-            text: 'Override All Property Values (existing values will be replaced)',
+            text: 'Override All Values (use template values instead of existing)',
             attr: { for: 'override-all-values' }
         });
 
-        // Property selection container (initially hidden, shown after template selection)
-        const propertyContainer = contentEl.createDiv({ cls: 'yaml-property-container yaml-element--hidden' });
-        // Set up event handlers for checkboxes
-        selectAllCheckbox.addEventListener('change', () => {
-            const checked = selectAllCheckbox.checked;
-            const checkboxes = propertyContainer.querySelectorAll('.yaml-property-item__include input');
-            checkboxes.forEach((checkbox: HTMLInputElement) => {
-                checkbox.checked = checked;
-                const changeEvent = new Event('change');
-                checkbox.dispatchEvent(changeEvent);
-            });
-        });
-
-        preserveAllCheckbox.addEventListener('change', () => {
-            this.preserveAllValues = preserveAllCheckbox.checked;
-            
-            // Only update individual checkboxes if options are not conflicting
-            if (preserveAllCheckbox.checked && overrideAllCheckbox.checked) {
-                // Both options are checked, do nothing for now
-                return;
-            }
-            
-            // Update all preserve checkboxes to match
-            const preserveCheckboxes = propertyContainer.querySelectorAll('.yaml-property-item__preserve input');
-            preserveCheckboxes.forEach((checkbox: HTMLInputElement) => {
-                checkbox.checked = this.preserveAllValues;
-                const changeEvent = new Event('change');
-                checkbox.dispatchEvent(changeEvent);
-            });
-        });
-        
+        // Add event listener to Override All checkbox
         overrideAllCheckbox.addEventListener('change', () => {
+            // Update class state
             this.overrideAllValues = overrideAllCheckbox.checked;
             
-            // Only update individual checkboxes if options are not conflicting
-            if (preserveAllCheckbox.checked && overrideAllCheckbox.checked) {
-                // Both options are checked, do nothing for now
-                return;
-            }
-            
-            // If this is checked, uncheck all preserve options
-            if (this.overrideAllValues) {
-                const preserveCheckboxes = propertyContainer.querySelectorAll('.yaml-property-item__preserve input');
-                preserveCheckboxes.forEach((checkbox: HTMLInputElement) => {
-                    checkbox.checked = false;
+            if (overrideAllCheckbox.checked) {
+                // Add visual indication that this option is active
+                overrideAllContainer.addClass('active');
+                
+                // Update all individual value checkboxes
+                const valueCheckboxes = contentEl.querySelectorAll('.yaml-property-preserve-checkbox:not([disabled])');
+                valueCheckboxes.forEach((checkbox: HTMLInputElement) => {
+                    checkbox.checked = true; // Check to use template values
+                    const changeEvent = new Event('change');
+                    checkbox.dispatchEvent(changeEvent);
+                });
+            } else {
+                overrideAllContainer.removeClass('active');
+                
+                // Uncheck all individual value checkboxes
+                const valueCheckboxes = contentEl.querySelectorAll('.yaml-property-preserve-checkbox:not([disabled])');
+                valueCheckboxes.forEach((checkbox: HTMLInputElement) => {
+                    checkbox.checked = false; // Uncheck to preserve existing values
                     const changeEvent = new Event('change');
                     checkbox.dispatchEvent(changeEvent);
                 });
@@ -231,8 +188,7 @@ export class TemplateSelectionModal extends Modal {
                     this.selectedTemplate,
                     this.targetFiles,
                     this.selectedProperties,
-                    this.preservePropertyValues,
-                    this.preserveAllValues,
+                    this.overrideValueProperties,
                     this.overrideAllValues
                 );
                 
@@ -248,7 +204,7 @@ export class TemplateSelectionModal extends Modal {
                     const validationText = validationMessage.querySelector('.yaml-validation-text');
                     if (validationText) {
                         if (!this.selectedTemplate) {
-                            validationText.textContent = 'select a template file.';
+                            validationText.textContent = 'Select a template file.';
                         } else if (this.selectedProperties.length === 0) {
                             validationText.textContent = 'Select at least one property to apply.';
                         } else {
@@ -271,7 +227,7 @@ export class TemplateSelectionModal extends Modal {
         });
         
         cancelButton.addEventListener('click', () => {
-            this.close();
+            this.plugin.navigateToModal(this, 'main');
         });
     }
 
@@ -410,143 +366,261 @@ export class TemplateSelectionModal extends Modal {
             propertiesSectionHeader.removeClass('yaml-element--hidden');
         }
         
-        // Update and show template info
-        const selectedTemplateInfo = document.getElementById('template-info-container');
-        if (selectedTemplateInfo) {
-            selectedTemplateInfo.innerHTML = '';
-            selectedTemplateInfo.createEl('span', { 
-                text: `Selected Template: ${this.selectedTemplate.path}`
-            });
-            selectedTemplateInfo.removeClass('yaml-element--hidden');
+        // Add the template header directly to content element
+        // First, remove any existing direct template elements
+        contentEl.querySelectorAll('.yaml-direct-template-header, .yaml-direct-path-container').forEach(el => el.remove());
+        
+        // Add the template header directly to content element
+        const directTemplateHeader = contentEl.createEl('h3', {
+            text: 'Selected Template',
+            cls: 'yaml-direct-template-header'
+        });
+        
+        // Insert after properties section header
+        if (propertiesSectionHeader) {
+            propertiesSectionHeader.after(directTemplateHeader);
         }
         
-        // Show option containers
+        // Add the path container directly to content element
+        const directPathContainer = contentEl.createDiv({
+            cls: 'yaml-direct-path-container'
+        });
+        
+        // Insert after the direct template header
+        directTemplateHeader.after(directPathContainer);
+        
+        // Add the path text to the container
+        directPathContainer.createSpan({
+            text: this.selectedTemplate.path,
+            cls: 'yaml-direct-path-text'
+        });
+        
+        // Add Property List header (same style as Selected Template)
+        const propertyListHeader = contentEl.createEl('h3', {
+            text: 'Property List',
+            cls: 'yaml-direct-template-header'
+        });
+
+        // Add informational message about value checkboxes
+        const valueInfoContainer = contentEl.createDiv({
+            cls: 'yaml-direct-path-container yaml-preserve-info-container'
+        });
+
+        // Add the info text
+        valueInfoContainer.createSpan({
+            text: 'Check property value to use template value (unchecked preserves existing value).',
+            cls: 'yaml-direct-path-text'
+        });
+
+        // Check initial state of Select All checkbox to set visibility
+        const infoSelectAllCheckbox = document.getElementById('select-all-properties') as HTMLInputElement;
+        if (infoSelectAllCheckbox && infoSelectAllCheckbox.checked) {
+            valueInfoContainer.addClass('yaml-element--hidden');
+        }
+        
+        // Show option containers 
         const selectAllContainer = document.getElementById('select-all-container');
-        const preserveAllContainer = document.getElementById('preserve-all-container');
         const overrideAllContainer = document.getElementById('override-all-container');
         
         if (selectAllContainer) {
             selectAllContainer.removeClass('yaml-element--hidden');
         }
         
-        if (preserveAllContainer) {
-            preserveAllContainer.removeClass('yaml-element--hidden');
-        }
-        
         if (overrideAllContainer) {
             overrideAllContainer.removeClass('yaml-element--hidden');
         }
         
-        // Get and show the property container
-        const propertyContainer = contentEl.querySelector('.yaml-property-container');
-        if (!propertyContainer) {
-            return;
+        // Add to loadTemplateProperties method after showing the option containers
+        const mainSelectAllCheckbox = selectAllContainer?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        if (mainSelectAllCheckbox) {
+            // Enable/disable secondary options based on initial Select All state
+            if (!mainSelectAllCheckbox.checked) {
+                if (overrideAllContainer) {
+                    overrideAllContainer.addClass('yaml-select-all--disabled');
+                }
+            }
         }
-        
-        propertyContainer.removeClass('yaml-element--hidden');
         
         // Load properties from template
         const properties = await this.plugin.parseFileProperties(this.selectedTemplate);
         const propertyKeys = Object.keys(properties);
         
+        // Clear any existing property items
+        contentEl.querySelectorAll('.yaml-properties-list').forEach(el => el.remove());
+        
         if (propertyKeys.length === 0) {
-            propertyContainer.createEl('p', { 
+            // Add message directly to content element
+            contentEl.createEl('p', { 
                 text: 'The selected template file does not have any properties.',
                 cls: 'yaml-hint-text'
             });
             return;
         }
         
-        // Create property selection list with improved layout
-        const propertyList = propertyContainer.createDiv({ cls: 'yaml-property-list' });
+        // Create a separate properties list area directly in the content
+        const propertiesList = contentEl.createDiv({ cls: 'yaml-properties-list' });
         
-        // Add header row
-        const headerRow = propertyList.createEl('div', { cls: 'yaml-property-item yaml-property-item--header' });
-        
-        headerRow.createEl('div', { text: 'Include', cls: 'yaml-property-item__include' });
-        headerRow.createEl('div', { text: 'Property', cls: 'yaml-property-item__name' });
-        headerRow.createEl('div', { text: 'Value', cls: 'yaml-property-item__value' });
-        headerRow.createEl('div', { text: 'Type', cls: 'yaml-property-item__type' });
-        headerRow.createEl('div', { text: 'Preserve Value', cls: 'yaml-property-item__preserve' });
-        
+        // Create elements for each property
         for (const key of propertyKeys) {
             const value = properties[key];
-            const propertyItem = propertyList.createEl('div', { cls: 'yaml-property-item' });
             
+            // Create property item directly in properties list
+            const propertyItem = propertiesList.createDiv({ cls: 'yaml-property-item' });
+
+            // Create property header with checkbox and name
+            const propertyHeader = propertyItem.createDiv({ cls: 'yaml-property-header' });
+
             // Include checkbox
-            const includeContainer = propertyItem.createEl('div', { cls: 'yaml-property-item__include' });
-            
-            const includeCheckbox = includeContainer.createEl('input', {
+            const includeCheckboxContainer = propertyHeader.createDiv({ cls: 'yaml-property-item__include' });
+            const includeCheckbox = includeCheckboxContainer.createEl('input', {
                 type: 'checkbox',
                 attr: { id: `include-${key}` }
             });
-            
-            // Property name
-            const nameCell = propertyItem.createEl('div', { text: key, cls: 'yaml-property-item__name' });
-            
-            // Property value
-            const valueCell = propertyItem.createEl('div', { 
-                text: formatValuePreview(value), 
-                cls: 'yaml-property-item__value' 
-            });
-            
-            // Property type display
-            const typeCell = propertyItem.createEl('div', { cls: 'yaml-property-item__type' });
 
-            // Determine type
+            // Property name (bold)
+            propertyHeader.createEl('span', { 
+                text: key, 
+                cls: 'yaml-property-name' 
+            });
+
+            // Determine type first
             let valueType = 'Text';
             if (typeof value === 'number') valueType = 'Number';
             else if (typeof value === 'boolean') valueType = 'Checkbox';
             else if (value instanceof Date) valueType = 'Date';
             else if (Array.isArray(value)) valueType = 'List';
-            typeCell.textContent = valueType;
-            
-            // Preserve value checkbox
-            const preserveValueContainer = propertyItem.createEl('div', { cls: 'yaml-property-item__preserve' });
 
-            const preserveValueCheckbox = preserveValueContainer.createEl('input', {
+            // Property type box FIRST
+            const typeBox = propertyItem.createDiv({ cls: 'yaml-property-type-box' });
+
+            // Create type text container for type and count
+            const typeInfoContainer = typeBox.createDiv({ cls: 'yaml-property-type-info' });
+
+            // Type text
+            typeInfoContainer.createEl('span', { 
+                text: `Type: ${valueType}`, 
+                cls: 'yaml-property-type-text' 
+            });
+
+            // For arrays, add count in the type box
+            if (Array.isArray(value)) {
+                // Add count below type (in the same container)
+                typeInfoContainer.createEl('span', {
+                    text: `Item: ${value.length}`, 
+                    cls: 'yaml-property-array-count'
+                });
+                
+                // Only add toggle for arrays with more than 3 items
+                if (value.length > 3) {
+                    const toggleButton = typeBox.createEl('button', {
+                        cls: 'yaml-property-toggle-button',
+                        attr: { 
+                            id: `toggle-${key}`,
+                            'aria-label': 'Toggle array items'
+                        }
+                    });
+                    toggleButton.innerHTML = '▼'; // Down arrow icon
+                    
+                    // Add event listener for toggle
+                    toggleButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        propertyItem.classList.toggle('yaml-property-item--expanded');
+                        toggleButton.innerHTML = propertyItem.classList.contains('yaml-property-item--expanded') ? '▲' : '▼';
+                    });
+                }
+            }
+
+            // Property value box SECOND
+            const valueBox = propertyItem.createDiv({ cls: 'yaml-property-value-box' });
+
+            // Value override checkbox (previously called "preserve" checkbox)
+            const valueCheckbox = valueBox.createEl('input', {
                 type: 'checkbox',
                 attr: { 
-                    id: `preserve-value-${key}`,
-                    disabled: !includeCheckbox.checked
+                    id: `override-value-${key}`,
+                    disabled: !includeCheckbox.checked,
+                    title: 'Check to use template value (unchecked preserves existing value)'
+                },
+                cls: 'yaml-property-preserve-checkbox' // Keep CSS class for compatibility
+            });
+
+            if (Array.isArray(value)) {
+                // Create container for array items directly in the value box
+                const arrayItemsContainer = valueBox.createDiv({ cls: 'yaml-property-array-items' });
+                
+                // Add all array items
+                value.forEach((item, index) => {
+                    // Format the display value
+                    let displayValue = String(item);
+                    if (typeof item === 'string') {
+                        displayValue = displayValue.replace(/^["'](.*)["']$/, '$1');
+                        if (displayValue.length > 40) {
+                            displayValue = displayValue.substring(0, 37) + '...';
+                        }
+                    }
+                    
+                    const itemEl = arrayItemsContainer.createEl('div', {
+                        text: `${index + 1}. ${displayValue}`,
+                        cls: 'yaml-property-array-item'
+                    });
+                    
+                    // Items beyond the third one get the expanded class
+                    if (index >= 3) {
+                        itemEl.addClass('yaml-property-array-item--expanded');
+                    }
+                });
+            } else {
+                // Check if value is empty
+                const isEmpty = value === null || value === undefined || value === '' || 
+                               (typeof value === 'object' && Object.keys(value).length === 0);
+                
+                if (isEmpty) {
+                    // Display "No value" text for empty values
+                    valueBox.createEl('span', { 
+                        text: 'No value', 
+                        cls: 'yaml-property-empty-value' 
+                    });
+                } else {
+                    // Original implementation for non-empty values
+                    valueBox.createEl('span', { 
+                        text: formatValuePreview(value), 
+                        cls: 'yaml-property-value-text' 
+                    });
                 }
-            });
-
-            // Set initial state based on global preserve/override toggles
-            preserveValueCheckbox.checked = this.preserveAllValues;
-
-            preserveValueContainer.createEl('label', {
-                text: 'Preserve Existing',
-                attr: { for: `preserve-value-${key}` },
-                cls: 'preserve-value-label'
-            });
+            }
             
-            // Event handlers
+            // Set initial checkbox state based on global settings
+            if (this.overrideAllValues) {
+                valueCheckbox.checked = true;
+            } else {
+                valueCheckbox.checked = false;
+            }
+            
+            // Event handlers for include checkbox
             includeCheckbox.addEventListener('change', () => {
                 if (includeCheckbox.checked) {
                     // Add to selected properties
                     if (!this.selectedProperties.includes(key)) {
                         this.selectedProperties.push(key);
                     }
-                    // Enable preserve value checkbox
-                    preserveValueCheckbox.disabled = false;
+                    // Enable value checkbox
+                    valueCheckbox.disabled = false;
                     
-                    // Apply global settings
-                    if (this.preserveAllValues && !this.overrideAllValues) {
-                        preserveValueCheckbox.checked = true;
-                    } else if (this.overrideAllValues && !this.preserveAllValues) {
-                        preserveValueCheckbox.checked = false;
+                    // Apply global settings 
+                    if (this.overrideAllValues) {
+                        valueCheckbox.checked = true;
+                    } else {
+                        valueCheckbox.checked = false;
                     }
                 } else {
                     // Remove from selected properties
                     this.selectedProperties = this.selectedProperties.filter(p => p !== key);
-                    // Remove from preserve values and disable checkbox
-                    this.preservePropertyValues = this.preservePropertyValues.filter(p => p !== key);
-                    preserveValueCheckbox.checked = false;
-                    preserveValueCheckbox.disabled = true;
+                    // Remove from override values and disable checkbox
+                    this.overrideValueProperties = this.overrideValueProperties.filter(p => p !== key);
+                    valueCheckbox.checked = false;
+                    valueCheckbox.disabled = true;
                 }
                 
-                // Update apply button state
                 // Update apply button state
                 const applyButton = this.contentEl.querySelector('.yaml-button--apply') as HTMLButtonElement;
                 const validationMessage = document.getElementById('validation-message');
@@ -569,7 +643,7 @@ export class TemplateSelectionModal extends Modal {
                         if (validationMessage) {
                             const validationText = validationMessage.querySelector('.yaml-validation-text');
                             if (validationText) {
-                                validationText.textContent = 'Please select at least one property.';
+                                validationText.textContent = 'Select at least one property to apply changes.';
                             }
                             validationMessage.removeClass('yaml-validation-message--hidden');
                         }
@@ -577,18 +651,85 @@ export class TemplateSelectionModal extends Modal {
                 }
             });
             
-            // Add event handler for the preserve value checkbox
-            preserveValueCheckbox.addEventListener('change', () => {
-                if (preserveValueCheckbox.checked) {
-                    // Add to preserve values properties
-                    if (!this.preservePropertyValues.includes(key)) {
-                        this.preservePropertyValues.push(key);
+            // Event handler for the value checkbox
+            valueCheckbox.addEventListener('change', () => {
+                if (valueCheckbox.checked) {
+                    // Add to override values properties (use template value)
+                    if (!this.overrideValueProperties.includes(key)) {
+                        this.overrideValueProperties.push(key);
                     }
                 } else {
-                    // Remove from preserve values properties
-                    this.preservePropertyValues = this.preservePropertyValues.filter(p => p !== key);
+                    // Remove from override values properties (preserve existing value)
+                    this.overrideValueProperties = this.overrideValueProperties.filter(p => p !== key);
                 }
             });
+        }
+        
+        // Update "select all" checkbox handler to work with the new structure
+        if (mainSelectAllCheckbox) {
+            // Remove old handler (if any)
+            const newSelectAllCheckbox = mainSelectAllCheckbox.cloneNode(true) as HTMLInputElement;
+            mainSelectAllCheckbox.parentNode?.replaceChild(newSelectAllCheckbox, mainSelectAllCheckbox);
+            
+            // Add new handler
+            newSelectAllCheckbox.addEventListener('change', () => {
+                const checked = newSelectAllCheckbox.checked;
+                const checkboxes = this.contentEl.querySelectorAll('.yaml-property-item__include input');
+                
+                // Set checkbox states for property items
+                checkboxes.forEach((checkbox: HTMLInputElement) => {
+                    checkbox.checked = checked;
+                    const changeEvent = new Event('change');
+                    checkbox.dispatchEvent(changeEvent);
+                });
+                
+                // Toggle value info message visibility
+                const valueInfoContainer = this.contentEl.querySelector('.yaml-preserve-info-container');
+                if (valueInfoContainer) {
+                    if (checked) {
+                        valueInfoContainer.addClass('yaml-element--hidden');
+                    } else {
+                        valueInfoContainer.removeClass('yaml-element--hidden');
+                    }
+                }
+                
+                // Enable/disable secondary options based on Select All state
+                if (overrideAllContainer) {
+                    if (checked) {
+                        overrideAllContainer.removeClass('yaml-select-all--disabled');
+                        const overrideAllCheckbox = overrideAllContainer.querySelector('input[type="checkbox"]') as HTMLInputElement;
+                        if (overrideAllCheckbox) {
+                            overrideAllCheckbox.disabled = false;
+                        }
+                    } else {
+                        overrideAllContainer.addClass('yaml-select-all--disabled');
+                        
+                        // Uncheck and disable the checkbox when primary is unchecked
+                        const overrideAllCheckbox = overrideAllContainer.querySelector('input[type="checkbox"]') as HTMLInputElement;
+                        if (overrideAllCheckbox) {
+                            overrideAllCheckbox.checked = false;
+                            overrideAllCheckbox.disabled = true;
+                            this.overrideAllValues = false;
+                            
+                            // Reset all value checkboxes
+                            const valueCheckboxes = this.contentEl.querySelectorAll('.yaml-property-preserve-checkbox:not([disabled])');
+                            valueCheckboxes.forEach((checkbox: HTMLInputElement) => {
+                                checkbox.checked = false;
+                            });
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Move the button container to the end of the content element
+        const buttonContainerEl = this.contentEl.querySelector('.yaml-button-container');
+        if (buttonContainerEl) {
+            // Remove from current position
+            buttonContainerEl.remove();
+            
+            // Append to the end of the content element
+            this.contentEl.appendChild(buttonContainerEl);
         }
         
         // Enable apply button
@@ -599,13 +740,12 @@ export class TemplateSelectionModal extends Modal {
         }
     }
     
-    // Apply template to files while preserving specified properties
+    // Apply template to files with reversed logic for value preservation
     async applyTemplateToFilesWithPreservation(
         templateFile: TFile, 
         targetFiles: TFile[],
         propertiesToApply: string[], 
-        preserveValueProperties: string[],
-        preserveAllValues: boolean,
+        overrideValueProperties: string[],
         overrideAllValues: boolean
     ) {
         try {
@@ -626,26 +766,25 @@ export class TemplateSelectionModal extends Modal {
                 // Skip the template file itself if it's in the target list
                 if (file.path === templateFile.path) continue;
                 
-                // Create a copy of filtered properties
-                const propertiesToApplyToFile = { ...filteredProperties };
-                
-                // Get existing properties for preservation
+                // Get existing properties
                 const existingProperties = await this.plugin.parseFileProperties(file);
                 
-                // Handle properties to preserve
+                // REVERSED LOGIC: Create a new object with properties to apply
+                const propertiesToApplyToFile = {};
+                
+                // For each property to apply
                 for (const prop of propertiesToApply) {
-                    // If both options are checked or neither is checked, use individual settings
-                    const useIndividualSettings = (preserveAllValues && overrideAllValues) || 
-                                               (!preserveAllValues && !overrideAllValues);
+                    const shouldUseTemplateValue = 
+                        overrideAllValues || // Override All Values is checked
+                        overrideValueProperties.includes(prop); // Individual checkbox is checked
                     
-                    // If this property should preserve its value and it exists in the target file
-                    if (
-                        (preserveAllValues && !overrideAllValues) || // Preserve All is checked alone 
-                        (useIndividualSettings && preserveValueProperties.includes(prop)) // Use individual checkbox
-                    ) {
-                        if (prop in existingProperties) {
-                            propertiesToApplyToFile[prop] = existingProperties[prop];
-                        }
+                    if (shouldUseTemplateValue) {
+                        // Use template value
+                        propertiesToApplyToFile[prop] = filteredProperties[prop];
+                    } else {
+                        // Try to preserve existing value, fall back to template value if none exists
+                        propertiesToApplyToFile[prop] = prop in existingProperties ? 
+                            existingProperties[prop] : filteredProperties[prop];
                     }
                 }
                 
