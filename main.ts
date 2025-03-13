@@ -192,8 +192,24 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
                 properties = { ...existingProperties, ...properties };
             }
             
+            // Flatten and sanitize array properties
+            const sanitizedProperties: Record<string, any> = {};
+            for (const [key, value] of Object.entries(properties)) {
+                // Ensure arrays are properly flattened
+                sanitizedProperties[key] = Array.isArray(value) 
+                    ? value.reduce((acc: any[], item) => {
+                        // Recursively flatten nested arrays
+                        if (Array.isArray(item)) {
+                            return acc.concat(item);
+                        }
+                        acc.push(item);
+                        return acc;
+                    }, [])
+                    : value;
+            }
+            
             // Format properties as YAML
-            const yamlProperties = Object.entries(properties)
+            const yamlProperties = Object.entries(sanitizedProperties)
                 .map(([key, value]) => `${key}: ${formatYamlValue(value)}`)
                 .join('\n');
             

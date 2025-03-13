@@ -5,22 +5,33 @@ export function formatYamlValue(value: any): string {
     }
     
     if (typeof value === 'string') {
-        // Check if string needs quotes (contains special characters)
-        if (value.includes('\n') || value.includes('"') || value.includes("'") || 
-            value.includes(':') || value.includes('#') || value.trim() !== value) {
-            // Use multi-line format for multi-line strings
-            if (value.includes('\n')) {
-                return `|\n  ${value.replace(/\n/g, '\n  ')}`;
-            }
-            // Use quotes for other special strings
+        // Check if string is multi-line
+        if (value.includes('\n')) {
+            // Split the string into lines
+            const lines = value.split('\n');
+            
+            // Use block scalar style with '|-' to preserve line breaks
+            return `|-\n  ${lines.map(line => line.trim() ? line : '').join('\n  ')}`;
+        }
+        
+        // For single-line strings with special characters
+        if (value.includes('"') || value.includes("'") || 
+            value.includes(':') || value.includes('#') || value.trim() !== value ||
+            value.includes('[[') || value.includes(']]')) {
+            // Use quotes for special strings
             return `"${value.replace(/"/g, '\\"')}"`;
         }
+        
         return value;
     }
     
     if (Array.isArray(value)) {
-        // Format as YAML array
-        return `[${value.map(item => formatYamlValue(item)).join(', ')}]`;
+        // For arrays, ensure each item is on a new line with proper indentation
+        return value.map(item => {
+            // Format each item, ensuring it's properly quoted if needed
+            const formattedItem = formatYamlValue(item);
+            return `\n  - ${formattedItem}`;
+        }).join('');
     }
     
     if (typeof value === 'object') {
@@ -37,18 +48,8 @@ export function formatYamlValue(value: any): string {
 // Helper function to format values for input fields
 export function formatInputValue(value: any): string {
     if (value === null || value === undefined) {
-        return '';
+    return '';
     }
-
-    if (typeof value === 'boolean') {
-        return value ? 'true' : 'false';
-    }
-
-    if (Array.isArray(value)) {
-        return JSON.stringify(value);
-    }
-
-    return String(value);
 }
 
 // Helper function to format value previews
@@ -64,16 +65,16 @@ export function formatValuePreview(value: any): string {
         }
         return `"${value}"`;
     }
-
+    
     if (Array.isArray(value)) {
         if (value.length === 0) return '[]';
         return `[Array: ${value.length} items]`;
     }
-
+    
     if (typeof value === 'object') {
         return '{Object}';
     }
-
+    
     // For booleans, numbers, etc.
     return String(value);
 }
