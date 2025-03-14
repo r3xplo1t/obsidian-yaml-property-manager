@@ -14,6 +14,11 @@ export function formatYamlValue(value: any): string {
             return `|-\n  ${lines.map(line => line.trim() ? line : '').join('\n  ')}`;
         }
         
+        // Always use quotes for strings that look like numbers
+        if (!isNaN(Number(value)) && value.trim() !== '') {
+            return `"${value.replace(/"/g, '\\"')}"`;
+        }
+        
         // For single-line strings with special characters
         if (value.includes('"') || value.includes("'") || 
             value.includes(':') || value.includes('#') || value.trim() !== value ||

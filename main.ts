@@ -9,10 +9,12 @@ import {
     BulkPropertyEditorModal,
     YAMLPropertyManagerSettingTab
 } from './src/modals';
+import { PropertyWithType, preservePropertyTypes, restorePropertyValues } from './src/utils/propertyTypes';
 
 export default class YAMLPropertyManagerPlugin extends Plugin {
     settings: YAMLPropertyManagerSettings;
     selectedFiles: TFile[] = []; // Added central file selection storage
+    propertyCache: Map<string, Record<string, PropertyWithType>> = new Map();
 
     async onload() {
         await this.loadSettings();
@@ -169,9 +171,22 @@ export default class YAMLPropertyManagerPlugin extends Plugin {
     
     // Parse YAML frontmatter from a file
     async parseFileProperties(file: TFile): Promise<Record<string, any>> {
-        const content = await this.app.vault.read(file);
-        const properties = this.app.metadataCache.getFileCache(file)?.frontmatter || {};
-        return properties;
+        try {
+            const content = await this.app.vault.read(file);
+            const properties = this.app.metadataCache.getFileCache(file)?.frontmatter || {};
+            
+            // Add these new lines
+            // Preserve the type information
+            const propertiesWithTypes = preservePropertyTypes(properties);
+            
+            // Store the typed properties in the cache
+            this.propertyCache.set(file.path, propertiesWithTypes);
+            
+            return properties;
+        } catch (error) {
+            console.error(`Error parsing properties for ${file.path}:`, error);
+            return {};
+        }
     }
 
     // Apply properties to a file

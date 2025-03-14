@@ -2,8 +2,13 @@ import { App, Modal, Notice, TFile, TextComponent } from 'obsidian';
 import YAMLPropertyManagerPlugin from '../../main';
 import { TemplateNode } from '../models/interfaces';
 import { formatValuePreview } from '../utils/helpers';
-import { detectPropertyType, getPropertyTypeDisplayName } from '../utils/propertyTypes';
-
+import { 
+    detectPropertyType, 
+    getPropertyTypeDisplayName,
+    PropertyWithType,
+    preservePropertyTypes,
+    restorePropertyValues 
+} from '../utils/propertyTypes';
 
 export class TemplateSelectionModal extends Modal {
     plugin: YAMLPropertyManagerPlugin;
@@ -856,7 +861,6 @@ export class TemplateSelectionModal extends Modal {
         }
     }
     
-    // Apply template to files with reversed logic for value preservation
     async applyTemplateToFilesWithPreservation(
         templateFile: TFile, 
         targetFiles: TFile[],
@@ -867,12 +871,16 @@ export class TemplateSelectionModal extends Modal {
         try {
             // Get template properties
             const templateProperties = await this.plugin.parseFileProperties(templateFile);
+            const templatePropertiesWithType = this.plugin.propertyCache.get(templateFile.path) || preservePropertyTypes(templateProperties);
             
             // Filter to only include specified properties
             const filteredProperties: Record<string, any> = {};
+            const filteredPropertiesWithType: Record<string, PropertyWithType> = {};
+            
             for (const key of propertiesToApply) {
                 if (key in templateProperties) {
                     filteredProperties[key] = templateProperties[key];
+                    filteredPropertiesWithType[key] = templatePropertiesWithType[key];
                 }
             }
             
@@ -882,56 +890,57 @@ export class TemplateSelectionModal extends Modal {
                 // Skip the template file itself if it's in the target list
                 if (file.path === templateFile.path) continue;
                 
-                // Get existing properties
+                // Get existing properties with type information
                 const existingProperties = await this.plugin.parseFileProperties(file);
+                const existingPropertiesWithType = this.plugin.propertyCache.get(file.path) || preservePropertyTypes(existingProperties);
                 
                 // Create properties to apply based on positioning option
-                let propertiesToApplyToFile: Record<string, any> = {};
+                let propertiesToApplyToFile: Record<string, PropertyWithType> = {};
                 
                 // Handle based on positioning option
                 switch (this.propertyPositioning) {
                     case 'above':
                         // Start with template properties
-                        propertiesToApplyToFile = { ...filteredProperties };
+                        propertiesToApplyToFile = { ...filteredPropertiesWithType };
                         
                         // Add existing properties that aren't in the template
-                        for (const prop in existingProperties) {
+                        for (const prop in existingPropertiesWithType) {
                             if (!propertiesToApply.includes(prop)) {
-                                propertiesToApplyToFile[prop] = existingProperties[prop];
+                                propertiesToApplyToFile[prop] = existingPropertiesWithType[prop];
                             }
                         }
                         break;
                         
                     case 'below':
                         // Start with existing properties that aren't in the template
-                        for (const prop in existingProperties) {
+                        for (const prop in existingPropertiesWithType) {
                             if (!propertiesToApply.includes(prop)) {
-                                propertiesToApplyToFile[prop] = existingProperties[prop];
+                                propertiesToApplyToFile[prop] = existingPropertiesWithType[prop];
                             }
                         }
                         
                         // Add template properties
                         propertiesToApplyToFile = { 
                             ...propertiesToApplyToFile,
-                            ...filteredProperties 
+                            ...filteredPropertiesWithType 
                         };
                         break;
                         
                     case 'remove':
                         // Only include properties from the template
-                        propertiesToApplyToFile = { ...filteredProperties };
+                        propertiesToApplyToFile = { ...filteredPropertiesWithType };
                         break;
                         
                     default:
                         // Default to 'below' behavior
-                        for (const prop in existingProperties) {
+                        for (const prop in existingPropertiesWithType) {
                             if (!propertiesToApply.includes(prop)) {
-                                propertiesToApplyToFile[prop] = existingProperties[prop];
+                                propertiesToApplyToFile[prop] = existingPropertiesWithType[prop];
                             }
                         }
                         propertiesToApplyToFile = { 
                             ...propertiesToApplyToFile,
-                            ...filteredProperties 
+                            ...filteredPropertiesWithType 
                         };
                 }
                 
@@ -941,14 +950,17 @@ export class TemplateSelectionModal extends Modal {
                         overrideAllValues || 
                         overrideValueProperties.includes(prop);
                     
-                    if (!shouldUseTemplateValue && prop in existingProperties) {
-                        // Preserve existing value
-                        propertiesToApplyToFile[prop] = existingProperties[prop];
+                    if (!shouldUseTemplateValue && prop in existingPropertiesWithType) {
+                        // Preserve existing value with type information
+                        propertiesToApplyToFile[prop] = existingPropertiesWithType[prop];
                     }
                 }
                 
-                 // Apply the properties
-               const success = await this.plugin.applyProperties(file, propertiesToApplyToFile, false);
+                // Convert back to regular properties with preserved types
+                const finalProperties = restorePropertyValues(propertiesToApplyToFile);
+                
+                // Apply the properties
+                const success = await this.plugin.applyProperties(file, finalProperties, false);
                 if (success) successCount++;
             }
             
