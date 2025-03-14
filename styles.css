@@ -30,7 +30,7 @@
    =========================================== */
 
 .yaml-window__property-manager .modal {
-  padding: 20px;
+  padding: 20px 20px 20px 20px; /* top right bottom left */
   width: 300px; /* Set a specific width instead of auto */
   height: auto;
   max-width: 450px; /* Increase from previous 300px to accommodate content */
@@ -47,6 +47,9 @@
   max-width: 500px !important; /* Reasonable max-width to prevent it being too wide */
   min-width: 280px !important; /* Ensure it doesn't get too narrow */
   margin: 0 auto !important; /* Center the modal */
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
 }
 
 .yaml-window__property-manager h2 {
@@ -134,10 +137,14 @@
 }
 
 .yaml-window__property-manager .yaml-action-section {
-  padding: 12px;
+  padding: 12px 0;
   border-radius: 4px;
   box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  align-self: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .yaml-window__property-manager .yaml-action-section__divider {
@@ -425,6 +432,14 @@
   position: relative;
 }
 
+.modal-container .modal:has(.yaml-window__template-selection) {
+  width: fit-content !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
 /* ------------------------------------
    Typography & Headers
    ------------------------------------ */
@@ -505,7 +520,6 @@
    ------------------------------------ */
 /* Template path container */
 .yaml-window__template-selection .yaml-direct-path-container {
-  width: fit-content;
   min-width: 500px;
   max-width: 100%;
   padding: 10px;
@@ -683,7 +697,6 @@
 .yaml-window__template-selection .yaml-property-item {
   display: flex;
   flex-direction: column;
-  width: fit-content;
   min-width: 500px;
   max-width: 100%;
   margin-bottom: 16px;
@@ -1023,11 +1036,6 @@
   transition: all 0.2s ease;
 }
 
-/* Selected state styling */
-.yaml-window__template-selection .yaml-position-option--selected {
-  background-color: rgba(var(--interactive-accent-rgb), 0.1);
-}
-
 /* Style radio to look like checkbox */
 .yaml-window__template-selection .yaml-position-option input[type="radio"] {
   -webkit-appearance: none;
@@ -1213,6 +1221,18 @@
   overflow-y: auto;
   overflow-x: hidden;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-container .modal:has(.yaml-window__batch-selector) {
+  width: fit-content !important;
+  max-width: 650px !important; /* Slightly larger to accommodate the batch selector */
+  min-width: 300px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
 }
 
 /* Typography */
