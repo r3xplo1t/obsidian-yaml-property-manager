@@ -412,693 +412,793 @@
    4. TEMPLATE SELECTION WINDOW
    =========================================== */
 
-   .yaml-content .yaml-window__template-selection .modal {
-    padding: 20px;
-    width: auto;
-    min-width: 600px;
-    max-width: 1200px;
-    max-height: 85vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin: 0 auto;
-    position: relative;
-  }
-    
-  /* Header styling - following Obsidian standards */
-  .yaml-window__template-selection h2 {
-    font-size: var(--h2-size) !important;
-    color: var(--h2-color, var(--text-normal)) !important;
-    font-weight: var(--h2-weight) !important;
-    line-height: var(--h2-line-height) !important;
-    margin-bottom: var(--h2-margin-bottom, 20px) !important;
-    border-bottom: var(--h2-border-bottom, 1px solid var(--background-modifier-border)) !important;
-    text-align: left !important;
-    padding-bottom: 8px !important;
-    padding-left: 0 !important;
-    margin-left: 0 !important;
-  }
-  
-  /* Properties section header styling */
-  .yaml-window__template-selection .yaml-properties-section-header {
-    font-size: var(--h2-size) !important;
-    color: var(--h2-color, var(--text-normal)) !important;
-    font-weight: var(--h2-weight) !important;
-    line-height: var(--h2-line-height) !important;
-    margin-top: 30px !important;
-    margin-bottom: 16px !important;
-    border-bottom: 1px solid var(--background-modifier-border) !important;
-    padding-bottom: 6px !important;
-    text-align: left !important;
-    padding-left: 0 !important;
-    margin-left: 0 !important;
-  }
-    
-  /* Template info header styling */
-  .yaml-window__template-selection .yaml-direct-template-header {
-    font-size: var(--h3-size) !important;
-    color: var(--h3-color, var(--text-normal)) !important;
-    font-weight: var(--h3-weight) !important;
-    line-height: var(--h3-line-height) !important;
-    margin-top: 20px !important;
-    margin-bottom: 10px !important;
-    padding-bottom: 4px !important;
-    text-align: left !important;
-    padding-left: 0 !important;
-    margin-left: 0 !important;
-  }
-  
-  /* Template path container */
-  .yaml-window__template-selection .yaml-direct-path-container {
-    width: fit-content;
-    min-width: 500px;
-    max-width: 100%;
-    padding: 10px;
-    margin-bottom: 16px;
-    background-color: var(--background-secondary-alt);
-    border-radius: 4px;
-    overflow-x: auto;
-    white-space: nowrap;
-    box-shadow: var(--input-shadow);
-    margin-left: 0 !important;
-    padding-left: 10px !important;
-  }
-  
-  /* Template path text */
-  .yaml-window__template-selection .yaml-direct-path-text {
-    font-family: var(--font-monospace);
-    font-size: var(--font-ui-small);
-    color: var(--text-normal);
-  }
-  
-  /* Text styling */
-  .yaml-window__template-selection p, 
-  .yaml-window__template-selection span, 
-  .yaml-window__template-selection div {
-    color: var(--text-normal);
-    font-size: var(--font-text-size, 16px);
-    line-height: var(--line-height-normal, 1.5);
-  }
-    
-  /* Hint text styling - following Obsidian standards */
-  .yaml-window__template-selection .yaml-hint-text {
-    color: var(--text-faint);
-    font-size: var(--font-ui-smaller);
-    margin: 4px 0 12px 2px;
-    font-style: italic;
-    line-height: 1.4;
-  }
-    
-  /* Search container */
-  .yaml-window__template-selection .yaml-search-container {
-    margin-bottom: 16px;
-    width: 100%;
-    position: relative;
-  }
-    
-  /* Obsidian-style search input */
-  .yaml-window__template-selection .search-input {
-    width: 100%;
-    height: var(--input-height);
-    border-radius: 4px !important; /* Match the template path container */
-    padding: 6px 30px;
-    font-size: var(--font-ui-small);
-    color: var(--text-normal);
-    border: none !important; /* Remove default border */
-    background-color: var(--background-secondary-alt) !important; /* Match template path container */
-    transition: box-shadow 0.15s ease, border-color 0.15s ease;
-    box-shadow: var(--input-shadow) !important; /* Ensure same shadow */
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' class='css-i6dzq1'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: 7px center;
-  }
-    
-  .yaml-window__template-selection .search-input:focus {
-    outline: none;
-    border: none !important;
-    box-shadow: var(--input-shadow-hover) !important;
-    background-color: var(--background-secondary-alt) !important;
-  }
-    
-  /* Template list container */
-  .yaml-window__template-selection .yaml-template-results {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    margin-bottom: 20px;
-    background-color: var(--background-primary);
-    width: fit-content;
-    min-width: 300px;
-    max-width: 100%;
-  }
-    
-  /* Template list */
-  .yaml-window__template-selection .yaml-template-list {
-    padding: 4px;
-  }
-    
-  /* Template items */
-  .yaml-window__template-selection .yaml-template-item {
-    display: flex;
-    align-items: center;
-    padding: 6px 8px;
-    margin-bottom: 2px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 100ms ease-in-out;
-    width: 100%;
-    min-width: 300px;
-  }
-    
-  .yaml-window__template-selection .yaml-template-item:hover {
-    background-color: var(--background-modifier-hover);
-  }
-    
-  /* Radio button */
-  .yaml-window__template-selection .yaml-template-radio {
-    margin-right: 8px;
-    flex-shrink: 0;
-  }
-    
-  /* File icon */
-  .yaml-window__template-selection .yaml-template-icon {
-    margin-right: 6px;
-    flex-shrink: 0;
-  }
-    
-  /* Template info container */
-  .yaml-window__template-selection .yaml-template-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-    
-  /* File name styling - normal text weight */
-  .yaml-window__template-selection .yaml-template-name {
-    font-weight: normal;
-    color: var(--text-normal);
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-    
-  /* File path styling */
-  .yaml-window__template-selection .yaml-template-path {
-    font-size: var(--font-ui-smaller);
-    color: var(--text-muted);
-    line-height: 1;
-    margin-left: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-    
-  /* No templates message */
-  .yaml-window__template-selection .yaml-message--no-templates {
-    color: var(--text-muted);
-    font-style: italic;
-    text-align: center;
-    padding: 20px;
-  }
-    
-  /* Loading indicator */
-  .yaml-window__template-selection .yaml-templates-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    width: 100%;
-  }
-    
-  .yaml-window__template-selection .yaml-spinner {
-    width: 30px;
-    height: 30px;
-    border: 3px solid var(--background-modifier-border);
-    border-top: 3px solid var(--interactive-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  
-  /* Properties list container */
-  .yaml-window__template-selection .yaml-properties-list {
-    width: 100%;
-    margin: 16px 0;
-  }
-  
-  /* Property item styling */
-  .yaml-window__template-selection .yaml-property-item {
-    display: flex;
-    flex-direction: column;
-    width: fit-content;
-    min-width: 500px;
-    max-width: 100%;
-    margin-bottom: 16px;
-    padding: 16px;
-    background-color: var(--background-secondary-alt);
-    border-radius: 4px;
-    box-shadow: var(--input-shadow);
-  }
-  
-  /* Property name header with checkbox */
-  .yaml-window__template-selection .yaml-property-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    width: 100%;
-  }
-  
-  /* Property include checkbox - square style */
-  .yaml-window__template-selection .yaml-property-item__include input[type="checkbox"] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--checkbox-border-color, var(--text-muted));
-    border-radius: 3px !important;
-    background-color: var(--background-primary);
-    margin-right: 8px;
-    cursor: pointer;
-    position: relative;
-    vertical-align: middle;
-    transition: background-color 0.15s ease;
-  }
-  
-  /* Checkbox checked state */
-  .yaml-window__template-selection .yaml-property-item__include input[type="checkbox"]:checked {
-    background-color: var(--interactive-accent);
-    border-color: var(--interactive-accent);
-  }
-  
-  /* Checkmark styling */
-  .yaml-window__template-selection .yaml-property-item__include input[type="checkbox"]:checked::after {
-    position: absolute !important;
-    content: "✓" !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    color: white !important;
-    font-size: 14px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-    width: auto !important;
-    height: auto !important;
-    border: none !important;
+/* Base container styles */
+.yaml-content .yaml-window__template-selection .modal {
+  padding: 20px;
+  width: auto;
+  min-width: 600px;
+  max-width: 1200px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 auto;
+  position: relative;
 }
 
-/* Style for preserve info container - reuses path container style but can be customized */
+/* ------------------------------------
+   Typography & Headers
+   ------------------------------------ */
+/* Main header styling */
+.yaml-window__template-selection h2 {
+  font-size: var(--h2-size) !important;
+  color: var(--h2-color, var(--text-normal)) !important;
+  font-weight: var(--h2-weight) !important;
+  line-height: var(--h2-line-height) !important;
+  margin-bottom: var(--h2-margin-bottom, 20px) !important;
+  border-bottom: var(--h2-border-bottom, 1px solid var(--background-modifier-border)) !important;
+  text-align: left !important;
+  padding-bottom: 8px !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Properties section header styling */
+.yaml-window__template-selection .yaml-properties-section-header {
+  font-size: var(--h2-size) !important;
+  color: var(--h2-color, var(--text-normal)) !important;
+  font-weight: var(--h2-weight) !important;
+  line-height: var(--h2-line-height) !important;
+  margin-top: 30px !important;
+  margin-bottom: 16px !important;
+  border-bottom: 1px solid var(--background-modifier-border) !important;
+  padding-bottom: 6px !important;
+  text-align: left !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Template info header styling */
+.yaml-window__template-selection .yaml-direct-template-header {
+  font-size: var(--h3-size) !important;
+  color: var(--h3-color, var(--text-normal)) !important;
+  font-weight: var(--h3-weight) !important;
+  line-height: var(--h3-line-height) !important;
+  margin-top: 20px !important;
+  margin-bottom: 10px !important;
+  padding-bottom: 4px !important;
+  text-align: left !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Options header styling */
+.yaml-window__template-selection .yaml-options-header {
+  font-size: var(--h4-size, var(--font-ui-medium)) !important;
+  color: var(--h4-color, var(--text-normal)) !important;
+  font-weight: var(--h4-weight, var(--font-medium)) !important;
+  line-height: var(--h4-line-height, 1.4) !important;
+  margin-top: 14px !important;
+  margin-bottom: 8px !important;
+  padding-left: 0 !important;
+}
+
+/* General text styling */
+.yaml-window__template-selection p, 
+.yaml-window__template-selection span, 
+.yaml-window__template-selection div {
+  color: var(--text-normal);
+  font-size: var(--font-text-size, 16px);
+  line-height: var(--line-height-normal, 1.5);
+}
+
+/* Hint text styling */
+.yaml-window__template-selection .yaml-hint-text {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  margin: 4px 0 12px 2px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* ------------------------------------
+   Path & Template Info Containers
+   ------------------------------------ */
+/* Template path container */
+.yaml-window__template-selection .yaml-direct-path-container {
+  width: fit-content;
+  min-width: 500px;
+  max-width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: nowrap;
+  box-shadow: var(--input-shadow);
+  margin-left: 0 !important;
+  padding-left: 10px !important;
+}
+
+/* Template path text */
+.yaml-window__template-selection .yaml-direct-path-text {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+}
+
+/* Style for preserve info container */
 .yaml-window__template-selection .yaml-preserve-info-container {
   color: var(--text-muted);
 }
-  
-  /* Bold property name */
-  .yaml-window__template-selection .yaml-property-name {
-    font-weight: var(--font-medium);
-    font-size: var(--font-ui-medium);
-  }
-  
-  /* Value container styling */
-  .yaml-window__template-selection .yaml-property-value-box {
-    display: flex;
-    align-items: center; /* Change from flex-start to center */
-    width: 100%;
-    padding: 8px 10px;
-    margin-bottom: 8px;
-    background-color: var(--background-primary);
-    border-radius: 4px;
-    box-shadow: var(--input-shadow);
-  }
-  
-  /* Type container styling */
-  .yaml-window__template-selection .yaml-property-type-box {
-    display: flex;
-    width: 100%;
-    padding: 8px 10px;
-    background-color: var(--background-primary);
-    border-radius: 4px;
-    box-shadow: var(--input-shadow);
-    margin-bottom: 8px; /* Add space between type and value boxes */
-  }
-  
-  /* Preservation checkbox styling */
-  .yaml-window__template-selection .yaml-property-preserve-checkbox {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--checkbox-border-color, var(--text-muted));
-    border-radius: 3px !important;
-    background-color: var(--background-primary);
-    margin-right: 8px;
-    cursor: pointer;
-    position: relative;
-    vertical-align: middle; /* Ensures vertical centering */
-    transition: background-color 0.15s ease;
-    align-self: center; /* Center in flex container */
-    margin-top: 0; /* Remove any top margin */
-    margin-bottom: 0; /* Remove any bottom margin */
-  }
-  
-  .yaml-window__template-selection .yaml-property-preserve-checkbox:checked {
-    background-color: var(--interactive-accent);
-    border-color: var(--interactive-accent);
-  }
-  
-  .yaml-window__template-selection .yaml-property-preserve-checkbox:checked::after {
-    position: absolute !important;
-    content: "✓" !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    color: white !important;
-    font-size: 14px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-    width: auto !important;
-    height: auto !important;
-    border: none !important;
- }
-  
-  /* Value text */
-  .yaml-window__template-selection .yaml-property-value-text {
-    flex: 1;
-    word-break: break-word;
-    max-width: 100%;
-  }
 
-  .yaml-window__template-selection .yaml-property-empty-value {
-    flex: 1;
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-    font-weight: 600;
-  }
-  
-  /* Type text */
-  .yaml-window__template-selection .yaml-property-type-text {
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-  }
+/* ------------------------------------
+   Search Functionality
+   ------------------------------------ */
+/* Search container */
+.yaml-window__template-selection .yaml-search-container {
+  margin-bottom: 16px;
+  width: 100%;
+  position: relative;
+}
 
-/* Array property styling - SIMPLIFIED VERSION */
-  .yaml-window__template-selection .yaml-property-type-box {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 8px 10px;
-    background-color: var(--background-primary);
-    border-radius: 4px;
-    box-shadow: var(--input-shadow);
-    margin-bottom: 8px;
-  }
+/* Search input */
+.yaml-window__template-selection .search-input {
+  width: 100%;
+  height: var(--input-height);
+  border-radius: 4px !important;
+  padding: 6px 30px;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  border: none !important;
+  background-color: var(--background-secondary-alt) !important;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow: var(--input-shadow) !important;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' stroke='currentColor' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round' class='css-i6dzq1'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 7px center;
+}
 
-  .yaml-window__template-selection .yaml-property-type-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.yaml-window__template-selection .search-input:focus {
+  outline: none;
+  border: none !important;
+  box-shadow: var(--input-shadow-hover) !important;
+  background-color: var(--background-secondary-alt) !important;
+}
 
-  .yaml-window__template-selection .yaml-property-type-text {
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-  }
+/* ------------------------------------
+   Template Results Display
+   ------------------------------------ */
+/* Template results container */
+.yaml-window__template-selection .yaml-template-results {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  margin-bottom: 20px;
+  background-color: var(--background-primary);
+  width: fit-content;
+  min-width: 300px;
+  max-width: 100%;
+}
 
-  .yaml-window__template-selection .yaml-property-array-count {
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-    margin-top: 2px;
-  }
+/* Template list */
+.yaml-window__template-selection .yaml-template-list {
+  padding: 4px;
+}
 
-  .yaml-window__template-selection .yaml-property-toggle-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 12px;
-    color: var(--text-muted);
-    padding: 2px 6px;
-    border-radius: 3px;
-    transition: background-color 0.15s ease;
-  }
+/* Template items */
+.yaml-window__template-selection .yaml-template-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  margin-bottom: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 100ms ease-in-out;
+  width: 100%;
+  min-width: 300px;
+}
 
-  .yaml-window__template-selection .yaml-property-toggle-button:hover {
-    background-color: var(--background-modifier-hover);
-    color: var(--text-normal);
-  }
+.yaml-window__template-selection .yaml-template-item:hover {
+  background-color: var(--background-modifier-hover);
+}
 
-  .yaml-window__template-selection .yaml-property-value-box {
-    display: flex;
-    align-items: flex-start;
-    width: 100%;
-    padding: 8px 10px;
-    margin-bottom: 8px;
-    background-color: var(--background-primary);
-    border-radius: 4px;
-    box-shadow: var(--input-shadow);
-  }
+/* Radio button */
+.yaml-window__template-selection .yaml-template-radio {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
 
-  .yaml-window__template-selection .yaml-property-array-items {
-    flex: 1;
-    margin-left: 8px;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 4px;
-    max-height: 100px; /* Initial height */
-    overflow-y: auto;
-  }
+/* File icon */
+.yaml-window__template-selection .yaml-template-icon {
+  margin-right: 6px;
+  flex-shrink: 0;
+}
 
-  .yaml-window__template-selection .yaml-property-item--expanded .yaml-property-array-items {
-    max-height: 300px; /* Expanded height */
-  }
+/* Template info container */
+.yaml-window__template-selection .yaml-template-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 
-  .yaml-window__template-selection .yaml-property-array-item {
-    padding: 4px 8px;
-    background-color: var(--background-secondary-alt);
-    border-radius: 3px;
-    font-size: var(--font-ui-smaller);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+/* File name styling */
+.yaml-window__template-selection .yaml-template-name {
+  font-weight: normal;
+  color: var(--text-normal);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  /* Hide expanded items by default */
-  .yaml-window__template-selection .yaml-property-array-item--expanded {
-    display: none;
-  }
+/* File path styling */
+.yaml-window__template-selection .yaml-template-path {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  line-height: 1;
+  margin-left: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  /* Show expanded items when the container has the expanded class */
-  .yaml-window__template-selection .yaml-property-item--expanded .yaml-property-array-item--expanded {
-    display: block;
+/* No templates message */
+.yaml-window__template-selection .yaml-message--no-templates {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Loading indicator */
+.yaml-window__template-selection .yaml-templates-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  width: 100%;
+}
+
+.yaml-window__template-selection .yaml-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--background-modifier-border);
+  border-top: 3px solid var(--interactive-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* ------------------------------------
+   Property List & Properties
+   ------------------------------------ */
+/* Properties list container */
+.yaml-window__template-selection .yaml-properties-list {
+  width: 100%;
+  margin: 16px 0;
+}
+
+/* Property item styling */
+.yaml-window__template-selection .yaml-property-item {
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  min-width: 500px;
+  max-width: 100%;
+  margin-bottom: 16px;
+  padding: 16px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 4px;
+  box-shadow: var(--input-shadow);
+}
+
+/* Property name header with checkbox */
+.yaml-window__template-selection .yaml-property-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+/* Property include checkbox */
+.yaml-window__template-selection .yaml-property-item__include input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--checkbox-border-color, var(--text-muted));
+  border-radius: 3px !important;
+  background-color: var(--background-primary);
+  margin-right: 8px;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+}
+
+/* Checkbox checked state */
+.yaml-window__template-selection .yaml-property-item__include input[type="checkbox"]:checked {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* Checkmark styling */
+.yaml-window__template-selection .yaml-property-item__include input[type="checkbox"]:checked::after {
+  position: absolute !important;
+  content: "✓" !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+}
+
+/* Bold property name */
+.yaml-window__template-selection .yaml-property-name {
+  font-weight: var(--font-medium);
+  font-size: var(--font-ui-medium);
+}
+
+/* Value container styling */
+.yaml-window__template-selection .yaml-property-value-box {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background-color: var(--background-primary);
+  border-radius: 4px;
+  box-shadow: var(--input-shadow);
+}
+
+/* Type container styling */
+.yaml-window__template-selection .yaml-property-type-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background-color: var(--background-primary);
+  border-radius: 4px;
+  box-shadow: var(--input-shadow);
+  margin-bottom: 8px;
+}
+
+/* Type info container */
+.yaml-window__template-selection .yaml-property-type-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Type text */
+.yaml-window__template-selection .yaml-property-type-text {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* Value preserve checkbox styling */
+.yaml-window__template-selection .yaml-property-preserve-checkbox {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--checkbox-border-color, var(--text-muted));
+  border-radius: 3px !important;
+  background-color: var(--background-primary);
+  margin-right: 8px;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+  align-self: center;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.yaml-window__template-selection .yaml-property-preserve-checkbox:checked {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.yaml-window__template-selection .yaml-property-preserve-checkbox:checked::after {
+  position: absolute !important;
+  content: "✓" !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+}
+
+/* Value text */
+.yaml-window__template-selection .yaml-property-value-text {
+  flex: 1;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.yaml-window__template-selection .yaml-property-empty-value {
+  flex: 1;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+}
+
+/* ------------------------------------
+   Array Property Styling
+   ------------------------------------ */
+/* Array count display */
+.yaml-window__template-selection .yaml-property-array-count {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* Toggle button for arrays */
+.yaml-window__template-selection .yaml-property-toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
+}
+
+.yaml-window__template-selection .yaml-property-toggle-button:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* Array items container */
+.yaml-window__template-selection .yaml-property-array-items {
+  flex: 1;
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 4px;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.yaml-window__template-selection .yaml-property-item--expanded .yaml-property-array-items {
+  max-height: 300px;
+}
+
+/* Individual array items */
+.yaml-window__template-selection .yaml-property-array-item {
+  padding: 4px 8px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 3px;
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hide expanded items by default */
+.yaml-window__template-selection .yaml-property-array-item--expanded {
+  display: none;
+}
+
+/* Show expanded items when container is expanded */
+.yaml-window__template-selection .yaml-property-item--expanded .yaml-property-array-item--expanded {
+  display: block;
+}
+
+/* ------------------------------------
+   Selection & Option Controls
+   ------------------------------------ */
+/* Select all and override options */
+.yaml-window__template-selection .yaml-select-all {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+  padding: 8px 10px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 4px;
+  width: fit-content;
+  min-width: 500px;
+  max-width: 100%;
+  transition: all 0.2s ease;
+}
+
+/* Checkbox styling for select-all options */
+.yaml-window__template-selection .yaml-select-all input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--checkbox-border-color, var(--text-muted));
+  border-radius: 3px !important;
+  background-color: var(--background-primary);
+  margin-right: 8px;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+}
+
+/* Checkbox checked state */
+.yaml-window__template-selection .yaml-select-all input[type="checkbox"]:checked {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* Checkmark styling */
+.yaml-window__template-selection .yaml-select-all input[type="checkbox"]:checked::after {
+  position: absolute !important;
+  content: "✓" !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+}
+
+/* Disabled checkbox styling */
+.yaml-window__template-selection .yaml-select-all--disabled input[type="checkbox"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Disabled state for secondary options */
+.yaml-window__template-selection .yaml-select-all--disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.yaml-window__template-selection .yaml-select-all--secondary {
+  margin-left: 0px;
+  padding-left: 10px;
+  background-color: var(--background-primary);
+  margin-top: -2px;
+  margin-bottom: 4px;
+}
+
+.yaml-window__template-selection .yaml-select-all__checkbox {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.yaml-window__template-selection .yaml-select-all label {
+  cursor: pointer;
+}
+
+/* Hidden secondary options */
+.yaml-window__template-selection .yaml-select-all--hidden {
+  display: none !important;
+}
+
+/* Active/selected secondary option */
+.yaml-window__template-selection .yaml-select-all--secondary.active {
+  background-color: rgba(var(--interactive-accent-rgb), 0.1);
+}
+
+/* ------------------------------------
+   Positioning Options
+   ------------------------------------ */
+/* Positioning options container */
+.yaml-window__template-selection .yaml-positioning-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+  margin-top: 8px;
+}
+
+/* Style for position options to match select-all */
+.yaml-window__template-selection .yaml-position-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+  padding: 8px 10px;
+  background-color: var(--background-secondary-alt);
+  border-radius: 4px;
+  width: fit-content;
+  min-width: 500px;
+  max-width: 100%;
+  transition: all 0.2s ease;
+}
+
+/* Selected state styling */
+.yaml-window__template-selection .yaml-position-option--selected {
+  background-color: rgba(var(--interactive-accent-rgb), 0.1);
+}
+
+/* Style radio to look like checkbox */
+.yaml-window__template-selection .yaml-position-option input[type="radio"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--checkbox-border-color, var(--text-muted));
+  border-radius: 3px !important;
+  background-color: var(--background-primary);
+  margin-right: 8px;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+}
+
+/* Checked state for the radio buttons to look like checkboxes */
+.yaml-window__template-selection .yaml-position-option input[type="radio"]:checked {
+  background-color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* Consistent radio button checkmark styling for positioning options */
+.yaml-window__template-selection .yaml-position-option input[type="radio"]:checked::after {
+  position: absolute !important;
+  content: "✓" !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+  background-color: var(--checkbox-marker-color);
+  mask-position: 52% 52%;
+  mask-size: 65%;
+  mask-repeat: no-repeat;
+  mask-image: url('data:image/svg+xml; utf8, <svg width="12px" height="10px" viewBox="0 0 12 8" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-4.000000, -6.000000)" fill="%23000000"><path d="M8.1043257,14.0367999 L4.52468714,10.5420499 C4.32525014,10.3497722 4.32525014,10.0368095 4.52468714,9.8424863 L5.24777413,9.1439454 C5.44721114,8.95166768 5.77142411,8.95166768 5.97086112,9.1439454 L8.46638057,11.5903727 L14.0291389,6.1442083 C14.2285759,5.95193057 14.5527889,5.95193057 14.7522259,6.1442083 L15.4753129,6.84377194 C15.6747499,7.03604967 15.6747499,7.35003511 15.4753129,7.54129009 L8.82741268,14.0367999 C8.62797568,14.2290777 8.3037627,14.2290777 8.1043257,14.0367999"></path></g></g></svg>');
+  -webkit-mask-position: 52% 52%;
+  -webkit-mask-size: 65%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-image: url('data:image/svg+xml; utf8, <svg width="12px" height="10px" viewBox="0 0 12 8" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><g transform="translate(-4.000000, -6.000000)" fill="%23000000"><path d="M8.1043257,14.0367999 L4.52468714,10.5420499 C4.32525014,10.3497722 4.32525014,10.0368095 4.52468714,9.8424863 L5.24777413,9.1439454 C5.44721114,8.95166768 5.77142411,8.95166768 5.97086112,9.1439454 L8.46638057,11.5903727 L14.0291389,6.1442083 C14.2285759,5.95193057 14.5527889,5.95193057 14.7522259,6.1442083 L15.4753129,6.84377194 C15.6747499,7.03604967 15.6747499,7.35003511 15.4753129,7.54129009 L8.82741268,14.0367999 C8.62797568,14.2290777 8.3037627,14.2290777 8.1043257,14.0367999"></path></g></g></svg>');
+}
+
+/* Position option label styling */
+.yaml-window__template-selection .yaml-position-option label {
+  cursor: pointer;
+}
+
+/* ------------------------------------
+   Buttons & Actions
+   ------------------------------------ */
+/* Buttons container */
+.yaml-window__template-selection .yaml-button-container {
+  margin-top: 20px !important;
+  padding: 8px 0 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+/* Sticky button container */
+.modal .yaml-window__template-selection .yaml-button-container--sticky {
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  background: var(--background-primary) !important;
+  padding: 12px 20px !important;
+  border-top: 1px solid var(--background-modifier-border) !important;
+  z-index: 10 !important;
+  box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Buttons */
+.yaml-window__template-selection .yaml-button {
+  border-radius: var(--button-radius) !important;
+  font-size: var(--font-ui-small) !important;
+  font-weight: var(--font-normal) !important;
+  padding: var(--size-4-1) var(--size-4-3) !important;
+  height: var(--input-height) !important;
+  background-color: var(--interactive-normal) !important;
+  color: var(--text-normal) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  min-width: 120px !important;
+  text-align: center !important;
+  box-shadow: var(--input-shadow) !important;
+}
+
+.yaml-window__template-selection .yaml-button:hover {
+  background-color: var(--interactive-hover) !important;
+  box-shadow: var(--input-shadow-hover) !important;
+}
+
+.yaml-window__template-selection .yaml-button--apply {
+  background-color: var(--interactive-accent) !important;
+  color: var(--text-on-accent) !important;
+}
+
+.yaml-window__template-selection .yaml-button--apply:hover {
+  background-color: var(--interactive-accent-hover) !important;
+}
+
+/* Disabled button */
+.yaml-window__template-selection .yaml-button--disabled {
+  cursor: not-allowed !important;
+}
+
+.yaml-window__template-selection .yaml-button-container button {
+  width: auto !important;
+  min-width: 120px !important;
+}
+
+/* ------------------------------------
+   Validation & Helper Elements
+   ------------------------------------ */
+/* Validation message styling */
+.yaml-window__template-selection .yaml-validation-message {
+  background-color: rgba(var(--color-red-rgb), 0.1) !important;
+  color: var(--text-error) !important;
+  padding: 10px 12px !important;
+  margin: 15px 0 !important;
+  border-radius: 4px !important;
+  font-size: var(--font-ui-medium) !important;
+  display: flex !important;
+  align-items: center !important;
+  width: auto !important;
+  min-width: 280px !important;
+  max-width: 100% !important;
+  border-left: 3px solid var(--text-error) !important;
+  box-shadow: var(--input-shadow) !important;
+}
+
+.yaml-window__template-selection .yaml-validation-icon {
+  margin-right: 10px !important;
+  flex-shrink: 0 !important;
+  font-size: 18px !important;
+}
+
+/* Animation for the validation message */
+@keyframes validationFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  
-  /* Select all and preserve all toggles */
-  .yaml-window__template-selection .yaml-select-all {
-    display: flex;
-    align-items: center;
-    margin-bottom: 2px;
-    padding: 8px 10px;
-    background-color: var(--background-secondary-alt);
-    border-radius: 4px;
-    width: fit-content;
-    min-width: 500px;
-    max-width: 100%;
-    transition: all 0.2s ease;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* Checkbox styling for select-all options */
-  .yaml-window__template-selection .yaml-select-all input[type="checkbox"] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--checkbox-border-color, var(--text-muted));
-    border-radius: 3px !important;
-    background-color: var(--background-primary);
-    margin-right: 8px;
-    cursor: pointer;
-    position: relative;
-    vertical-align: middle;
-    transition: background-color 0.15s ease;
-  }
-  
-  /* Checkbox checked state */
-  .yaml-window__template-selection .yaml-select-all input[type="checkbox"]:checked {
-    background-color: var(--interactive-accent);
-    border-color: var(--interactive-accent);
-  }
-  
-  /* Checkmark styling */
-  .yaml-window__template-selection .yaml-select-all input[type="checkbox"]:checked::after {
-    position: absolute !important;
-    content: "✓" !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    color: white !important;
-    font-size: 14px !important;
-    font-weight: 900 !important;
-    line-height: 1 !important;
-    width: auto !important;
-    height: auto !important;
-    border: none !important;
-  }
-  
-  /* Disabled checkbox styling */
-  .yaml-window__template-selection .yaml-select-all--disabled input[type="checkbox"] {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  /* Disabled state for secondary options */
-  .yaml-window__template-selection .yaml-select-all--disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-  
-  .yaml-window__template-selection .yaml-select-all--secondary {
-    margin-left: 0px;
-    padding-left: 10px;
-    background-color: var(--background-primary);
-    margin-top: -2px;
-    margin-bottom: 4px;
-  }
-    
-  .yaml-window__template-selection .yaml-select-all__checkbox {
-    margin-right: 8px;
-    cursor: pointer;
-  }
-  
-  .yaml-window__template-selection .yaml-select-all label {
-    cursor: pointer;
-  }
-  
-  /* When primary checkbox is unchecked, hide secondary options */
-  .yaml-window__template-selection .yaml-select-all--hidden {
-    display: none !important;
-  }
-  
-  /* Styling for active/selected secondary option */
-  .yaml-window__template-selection .yaml-select-all--secondary.active {
-    background-color: rgba(var(--interactive-accent-rgb), 0.1);
-  }
-    
-  /* Buttons container */
-  .yaml-window__template-selection .yaml-button-container {
-    margin-top: 20px !important;
-    padding: 8px 0 !important;
-    display: flex !important;
-    justify-content: flex-end !important;
-    gap: 8px !important;
-    width: 100% !important;
-  }
-    
-  /* Sticky button container */
-  .modal .yaml-window__template-selection .yaml-button-container--sticky {
-    position: sticky !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    background: var(--background-primary) !important;
-    padding: 12px 20px !important;
-    border-top: 1px solid var(--background-modifier-border) !important;
-    z-index: 10 !important;
-    box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1) !important;
-  }
-    
-  /* Buttons */
-  .yaml-window__template-selection .yaml-button {
-    border-radius: var(--button-radius) !important;
-    font-size: var(--font-ui-small) !important;
-    font-weight: var(--font-normal) !important;
-    padding: var(--size-4-1) var(--size-4-3) !important;
-    height: var(--input-height) !important;
-    background-color: var(--interactive-normal) !important;
-    color: var(--text-normal) !important;
-    cursor: pointer !important;
-    transition: all 0.15s ease !important;
-    min-width: 120px !important;
-    text-align: center !important;
-    box-shadow: var(--input-shadow) !important;
-  }
-    
-  .yaml-window__template-selection .yaml-button:hover {
-    background-color: var(--interactive-hover) !important;
-    box-shadow: var(--input-shadow-hover) !important;
-  }
-    
-  .yaml-window__template-selection .yaml-button--apply {
-    background-color: var(--interactive-accent) !important;
-    color: var(--text-on-accent) !important;
-  }
-  
-  /* Updated hover style for Apply button */  
-  .yaml-window__template-selection .yaml-button--apply:hover {
-    background-color: var(--interactive-accent-hover) !important;
-  }
-    
-  /* Disabled button */
-  .yaml-window__template-selection .yaml-button--disabled {
-    cursor: not-allowed !important;
-  }
-    
-  .yaml-window__template-selection .yaml-button-container button {
-    width: auto !important;
-    min-width: 120px !important;
-  }
-  
-  /* Validation message styling */
-  .yaml-window__template-selection .yaml-validation-message {
-    background-color: rgba(var(--color-red-rgb), 0.1) !important;
-    color: var(--text-error) !important;
-    padding: 10px 12px !important;
-    margin: 15px 0 !important;
-    border-radius: 4px !important;
-    font-size: var(--font-ui-medium) !important;
-    display: flex !important;
-    align-items: center !important;
-    width: auto !important;
-    min-width: 280px !important;
-    max-width: 100% !important;
-    border-left: 3px solid var(--text-error) !important;
-    box-shadow: var(--input-shadow) !important;
-  }
-  
-  .yaml-window__template-selection .yaml-validation-icon {
-    margin-right: 10px !important;
-    flex-shrink: 0 !important;
-    font-size: 18px !important;
-  }
-  
-  /* Animation for the validation message */
-  @keyframes validationFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .yaml-window__template-selection .yaml-validation-message {
-    animation: validationFadeIn 0.3s ease-in-out !important;
-  }
-  
-  /* Hidden validation message */
-  .yaml-window__template-selection .yaml-validation-message--hidden {
-    display: none !important;
-  }
-  
-  /* Hidden class for elements we want to initially hide */
-  .yaml-window__template-selection .yaml-element--hidden {
-    display: none !important;
-  }
+}
+
+.yaml-window__template-selection .yaml-validation-message {
+  animation: validationFadeIn 0.3s ease-in-out !important;
+}
+
+/* Hidden validation message */
+.yaml-window__template-selection .yaml-validation-message--hidden {
+  display: none !important;
+}
+
+/* Hidden class for elements */
+.yaml-window__template-selection .yaml-element--hidden {
+  display: none !important;
+}
 
 /* ===========================================
    5. BATCH FILE SELECTOR WINDOW
@@ -1217,7 +1317,7 @@
   transform: translate(-50%, -50%) !important;
   color: white !important;
   font-size: 14px !important;
-  font-weight: 900 !important;
+  font-weight: 500 !important;
   line-height: 1 !important;
   width: auto !important;
   height: auto !important;
@@ -1230,6 +1330,19 @@
 .yaml-window__batch-selector .yaml-custom-checkbox.is-checked .yaml-checkbox-checkmark,
 .yaml-window__batch-selector .yaml-checkbox-checkmark.yaml-checkbox-checkmark--visible {
   opacity: 1; /* Visible when checkbox is checked */
+}
+
+/* Alternative approach to ensure checkmark appears */
+.yaml-window__batch-selector .yaml-custom-checkbox.is-checked::after {
+  content: "✓" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
 }
 
 /* Disabled checkboxes */
@@ -1707,6 +1820,15 @@
   flex-shrink: 0;
 }
 
+/* Updated type info container */
+.yaml-window__template-selection .yaml-property-type-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .yaml-window__bulk-editor .yaml-property-item__value {
   flex: 2;
   min-width: 150px !important;
@@ -2135,6 +2257,12 @@
   border-color: var(--interactive-accent) !important;
 }
 
+/* Disabled checkboxes */
+.yaml-template-file-selector .yaml-custom-checkbox.yaml-custom-checkbox--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Checkmark inside checkbox */
 .yaml-template-file-selector .yaml-checkbox-checkmark {
   position: absolute !important;
@@ -2143,18 +2271,32 @@
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
   color: white !important;
-  font-size: 14px !important;
-  font-weight: 900 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
   line-height: 1 !important;
   width: auto !important;
   height: auto !important;
   border: none !important;
+  z-index: 5 !important;
+  opacity: 0;
+  transition: opacity 0.1s ease;
 }
 
-/* Disabled checkboxes */
-.yaml-template-file-selector .yaml-custom-checkbox.yaml-custom-checkbox--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.yaml-template-file-selector .yaml-custom-checkbox.is-checked .yaml-checkbox-checkmark,
+.yaml-template-file-selector .yaml-checkbox-checkmark.yaml-checkbox-checkmark--visible {
+  opacity: 1 !important; /* Visible when checkbox is checked */
+}
+
+.yaml-template-file-selector .yaml-custom-checkbox.is-checked::after {
+  content: "✓" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
 }
 
 /* File and folder icons - UPDATED FOR EMOJIS */

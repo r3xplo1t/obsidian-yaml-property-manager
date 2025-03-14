@@ -2,6 +2,8 @@ import { App, Modal, Notice, TFile, TextComponent } from 'obsidian';
 import YAMLPropertyManagerPlugin from '../../main';
 import { TemplateNode } from '../models/interfaces';
 import { formatValuePreview } from '../utils/helpers';
+import { detectPropertyType, getPropertyTypeDisplayName } from '../utils/propertyTypes';
+
 
 export class TemplateSelectionModal extends Modal {
     plugin: YAMLPropertyManagerPlugin;
@@ -10,6 +12,7 @@ export class TemplateSelectionModal extends Modal {
     selectedProperties: string[] = [];
     overrideValueProperties: string[] = []; // Changed from preservePropertyValues
     overrideAllValues: boolean = false; // Changed from preserveAllValues
+    propertyPositioning: 'below' | 'above' | 'remove' = 'below';
     templateTree: TemplateNode = { type: 'folder', name: 'Root', path: '', children: [] };
     allTemplates: TFile[] = [];
     searchResults: TFile[] = [];
@@ -401,6 +404,126 @@ export class TemplateSelectionModal extends Modal {
             cls: 'yaml-direct-template-header'
         });
 
+        // Move the Select All and Override All containers under the Property List header
+        const selectAllContainer = document.getElementById('select-all-container');
+        const overrideAllContainer = document.getElementById('override-all-container');
+
+        if (selectAllContainer) {
+            propertyListHeader.after(selectAllContainer);
+            selectAllContainer.removeClass('yaml-element--hidden');
+        }
+
+        if (overrideAllContainer && selectAllContainer) {
+            selectAllContainer.after(overrideAllContainer);
+            overrideAllContainer.removeClass('yaml-element--hidden');
+        }
+        
+        // Add advanced positioning options section
+        if (overrideAllContainer) {
+            // Create header for positioning options (h4)
+            const positioningHeader = contentEl.createEl('h4', {
+                text: 'Property Positioning Options',
+                cls: 'yaml-options-header'
+            });
+
+            // Position after the override container
+            overrideAllContainer.after(positioningHeader);
+
+            // Create options container with similar styling to select-all containers
+            const positioningOptions = contentEl.createDiv({
+                cls: 'yaml-positioning-options'
+            });
+
+            // Position after the header
+            positioningHeader.after(positioningOptions);
+
+            // Option 1: Position below
+            const belowOption = positioningOptions.createDiv({ cls: 'yaml-select-all yaml-position-option' });
+            const belowRadio = belowOption.createEl('input', {
+                type: 'radio',
+                attr: { 
+                    name: 'positioning',
+                    id: 'position-below',
+                    checked: true
+                },
+                cls: 'yaml-select-all__checkbox'
+            });
+            belowOption.createEl('label', {
+                text: 'Position new properties below existing ones',
+                attr: { for: 'position-below' }
+            });
+
+            // Option 2: Position above
+            const aboveOption = positioningOptions.createDiv({ cls: 'yaml-select-all yaml-position-option' });
+            const aboveRadio = aboveOption.createEl('input', {
+                type: 'radio',
+                attr: { 
+                    name: 'positioning',
+                    id: 'position-above'
+                },
+                cls: 'yaml-select-all__checkbox'
+            });
+            aboveOption.createEl('label', {
+                text: 'Position new properties above existing ones',
+                attr: { for: 'position-above' }
+            });
+
+            // Option 3: Remove others
+            const removeOption = positioningOptions.createDiv({ cls: 'yaml-select-all yaml-position-option' });
+            const removeRadio = removeOption.createEl('input', {
+                type: 'radio',
+                attr: { 
+                    name: 'positioning',
+                    id: 'remove-others'
+                },
+                cls: 'yaml-select-all__checkbox'
+            });
+            removeOption.createEl('label', {
+                text: 'Remove properties not in template',
+                attr: { for: 'remove-others' }
+            });
+
+            // Store the selected positioning option in a class property
+            belowRadio.addEventListener('change', () => {
+                if (belowRadio.checked) {
+                    this.propertyPositioning = 'below';
+                    
+                    // Add a visual indication for the selected option
+                    belowOption.addClass('yaml-position-option--selected');
+                    aboveOption.removeClass('yaml-position-option--selected');
+                    removeOption.removeClass('yaml-position-option--selected');
+                }
+            });
+
+            aboveRadio.addEventListener('change', () => {
+                if (aboveRadio.checked) {
+                    this.propertyPositioning = 'above';
+                    
+                    // Add a visual indication for the selected option
+                    belowOption.removeClass('yaml-position-option--selected');
+                    aboveOption.addClass('yaml-position-option--selected');
+                    removeOption.removeClass('yaml-position-option--selected');
+                }
+            });
+
+            removeRadio.addEventListener('change', () => {
+                if (removeRadio.checked) {
+                    this.propertyPositioning = 'remove';
+                    
+                    // Add a visual indication for the selected option
+                    belowOption.removeClass('yaml-position-option--selected');
+                    aboveOption.removeClass('yaml-position-option--selected');
+                    removeOption.addClass('yaml-position-option--selected');
+                }
+            });
+
+            // Initialize the selected state
+            belowOption.addClass('yaml-position-option--selected');
+
+            // Set default value
+            this.propertyPositioning = 'below';
+        }
+
         // Add informational message about value checkboxes
         const valueInfoContainer = contentEl.createDiv({
             cls: 'yaml-direct-path-container yaml-preserve-info-container'
@@ -417,10 +540,6 @@ export class TemplateSelectionModal extends Modal {
         if (infoSelectAllCheckbox && infoSelectAllCheckbox.checked) {
             valueInfoContainer.addClass('yaml-element--hidden');
         }
-        
-        // Show option containers 
-        const selectAllContainer = document.getElementById('select-all-container');
-        const overrideAllContainer = document.getElementById('override-all-container');
         
         if (selectAllContainer) {
             selectAllContainer.removeClass('yaml-element--hidden');
@@ -483,30 +602,27 @@ export class TemplateSelectionModal extends Modal {
                 cls: 'yaml-property-name' 
             });
 
-            // Determine type first
-            let valueType = 'Text';
-            if (typeof value === 'number') valueType = 'Number';
-            else if (typeof value === 'boolean') valueType = 'Checkbox';
-            else if (value instanceof Date) valueType = 'Date';
-            else if (Array.isArray(value)) valueType = 'List';
+            // Detect property type based on value
+            const propertyType = detectPropertyType(value);
+            const typeDisplayName = getPropertyTypeDisplayName(propertyType);
 
             // Property type box FIRST
             const typeBox = propertyItem.createDiv({ cls: 'yaml-property-type-box' });
 
-            // Create type text container for type and count
+            // Create type info container
             const typeInfoContainer = typeBox.createDiv({ cls: 'yaml-property-type-info' });
 
-            // Type text
-            typeInfoContainer.createEl('span', { 
-                text: `Type: ${valueType}`, 
+            // Type text - simple format
+            typeInfoContainer.createSpan({ 
+                text: `Type: ${typeDisplayName}`, 
                 cls: 'yaml-property-type-text' 
             });
 
-            // For arrays, add count in the type box
-            if (Array.isArray(value)) {
-                // Add count below type (in the same container)
-                typeInfoContainer.createEl('span', {
-                    text: `Item: ${value.length}`, 
+            // Special handling for list type - show count and add toggle button if needed
+            if (propertyType === "list" && Array.isArray(value)) {
+                // Add count next to type
+                typeInfoContainer.createSpan({
+                    text: ` (${value.length} items)`, 
                     cls: 'yaml-property-array-count'
                 });
                 
@@ -769,27 +885,70 @@ export class TemplateSelectionModal extends Modal {
                 // Get existing properties
                 const existingProperties = await this.plugin.parseFileProperties(file);
                 
-                // REVERSED LOGIC: Create a new object with properties to apply
-                const propertiesToApplyToFile = {};
+                // Create properties to apply based on positioning option
+                let propertiesToApplyToFile: Record<string, any> = {};
                 
-                // For each property to apply
+                // Handle based on positioning option
+                switch (this.propertyPositioning) {
+                    case 'above':
+                        // Start with template properties
+                        propertiesToApplyToFile = { ...filteredProperties };
+                        
+                        // Add existing properties that aren't in the template
+                        for (const prop in existingProperties) {
+                            if (!propertiesToApply.includes(prop)) {
+                                propertiesToApplyToFile[prop] = existingProperties[prop];
+                            }
+                        }
+                        break;
+                        
+                    case 'below':
+                        // Start with existing properties that aren't in the template
+                        for (const prop in existingProperties) {
+                            if (!propertiesToApply.includes(prop)) {
+                                propertiesToApplyToFile[prop] = existingProperties[prop];
+                            }
+                        }
+                        
+                        // Add template properties
+                        propertiesToApplyToFile = { 
+                            ...propertiesToApplyToFile,
+                            ...filteredProperties 
+                        };
+                        break;
+                        
+                    case 'remove':
+                        // Only include properties from the template
+                        propertiesToApplyToFile = { ...filteredProperties };
+                        break;
+                        
+                    default:
+                        // Default to 'below' behavior
+                        for (const prop in existingProperties) {
+                            if (!propertiesToApply.includes(prop)) {
+                                propertiesToApplyToFile[prop] = existingProperties[prop];
+                            }
+                        }
+                        propertiesToApplyToFile = { 
+                            ...propertiesToApplyToFile,
+                            ...filteredProperties 
+                        };
+                }
+                
+                // Handle property value preservation
                 for (const prop of propertiesToApply) {
                     const shouldUseTemplateValue = 
-                        overrideAllValues || // Override All Values is checked
-                        overrideValueProperties.includes(prop); // Individual checkbox is checked
+                        overrideAllValues || 
+                        overrideValueProperties.includes(prop);
                     
-                    if (shouldUseTemplateValue) {
-                        // Use template value
-                        propertiesToApplyToFile[prop] = filteredProperties[prop];
-                    } else {
-                        // Try to preserve existing value, fall back to template value if none exists
-                        propertiesToApplyToFile[prop] = prop in existingProperties ? 
-                            existingProperties[prop] : filteredProperties[prop];
+                    if (!shouldUseTemplateValue && prop in existingProperties) {
+                        // Preserve existing value
+                        propertiesToApplyToFile[prop] = existingProperties[prop];
                     }
                 }
                 
-                // Apply the properties
-                const success = await this.plugin.applyProperties(file, propertiesToApplyToFile, false);
+                 // Apply the properties
+               const success = await this.plugin.applyProperties(file, propertiesToApplyToFile, false);
                 if (success) successCount++;
             }
             
